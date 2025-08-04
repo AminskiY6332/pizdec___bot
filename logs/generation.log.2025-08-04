@@ -1,0 +1,276 @@
+2025-08-04 22:50:26 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 22:50:26 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 22:50:26 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 22:50:26 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 22:51:22 - generation - WARNING - === СБРОС КОНТЕКСТА ===
+2025-08-04 22:51:22 - generation - WARNING - Тип: user_profile
+2025-08-04 22:51:22 - generation - WARNING - User ID: 1290100715
+2025-08-04 22:51:22 - generation - WARNING - До очистки: user_data={}
+2025-08-04 22:51:22 - generation - WARNING - Стек вызовов:
+2025-08-04 22:51:22 - generation - WARNING - File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+2025-08-04 22:51:22 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 3011, in user_callback_handler
+    await handle_user_callback(query, state)
+2025-08-04 22:51:22 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 193, in handle_user_callback
+    await handle_user_profile_callback(query, state, user_id)
+2025-08-04 22:51:22 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 1781, in handle_user_profile_callback
+    await reset_generation_context(state, "user_profile", user_id=user_id)
+2025-08-04 22:51:22 - generation - WARNING - File "D:\vsProjects\pizdec___bot\generation\utils.py", line 58, in reset_generation_context
+    stack = traceback.format_stack()
+2025-08-04 22:51:22 - generation - WARNING - === КОНЕЦ СТЕКА ===
+2025-08-04 22:51:22 - generation - INFO - Полная очистка контекста (тип: user_profile) для user_id=1290100715
+2025-08-04 22:51:22 - generation - INFO - После очистки: user_data={'user_id': 1290100715}
+2025-08-04 22:55:30 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 22:55:30 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 22:55:30 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 22:55:30 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 22:55:49 - generation - WARNING - === СБРОС КОНТЕКСТА ===
+2025-08-04 22:55:49 - generation - WARNING - Тип: my_avatars
+2025-08-04 22:55:49 - generation - WARNING - User ID: 1290100715
+2025-08-04 22:55:49 - generation - WARNING - До очистки: user_data={}
+2025-08-04 22:55:49 - generation - WARNING - Стек вызовов:
+2025-08-04 22:55:49 - generation - WARNING - File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+2025-08-04 22:55:49 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 3011, in user_callback_handler
+    await handle_user_callback(query, state)
+2025-08-04 22:55:49 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 207, in handle_user_callback
+    await handle_my_avatars_callback(query, state, user_id)
+2025-08-04 22:55:49 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 2353, in handle_my_avatars_callback
+    await reset_generation_context(state, "my_avatars", user_id=user_id)
+2025-08-04 22:55:49 - generation - WARNING - File "D:\vsProjects\pizdec___bot\generation\utils.py", line 58, in reset_generation_context
+    stack = traceback.format_stack()
+2025-08-04 22:55:49 - generation - WARNING - === КОНЕЦ СТЕКА ===
+2025-08-04 22:55:49 - generation - INFO - Полная очистка контекста (тип: my_avatars) для user_id=1290100715
+2025-08-04 22:55:49 - generation - INFO - После очистки: user_data={'user_id': 1290100715}
+2025-08-04 22:55:54 - generation - WARNING - === СБРОС КОНТЕКСТА ===
+2025-08-04 22:55:54 - generation - WARNING - Тип: user_profile
+2025-08-04 22:55:54 - generation - WARNING - User ID: 1290100715
+2025-08-04 22:55:54 - generation - WARNING - До очистки: user_data={}
+2025-08-04 22:55:54 - generation - WARNING - Стек вызовов:
+2025-08-04 22:55:54 - generation - WARNING - File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+2025-08-04 22:55:54 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 3011, in user_callback_handler
+    await handle_user_callback(query, state)
+2025-08-04 22:55:54 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 193, in handle_user_callback
+    await handle_user_profile_callback(query, state, user_id)
+2025-08-04 22:55:54 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 1781, in handle_user_profile_callback
+    await reset_generation_context(state, "user_profile", user_id=user_id)
+2025-08-04 22:55:54 - generation - WARNING - File "D:\vsProjects\pizdec___bot\generation\utils.py", line 58, in reset_generation_context
+    stack = traceback.format_stack()
+2025-08-04 22:55:54 - generation - WARNING - === КОНЕЦ СТЕКА ===
+2025-08-04 22:55:54 - generation - INFO - Полная очистка контекста (тип: user_profile) для user_id=1290100715
+2025-08-04 22:55:54 - generation - INFO - После очистки: user_data={'user_id': 1290100715}
+2025-08-04 22:57:01 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 22:57:01 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 22:57:01 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 22:57:01 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 22:57:08 - generation - WARNING - === СБРОС КОНТЕКСТА ===
+2025-08-04 22:57:08 - generation - WARNING - Тип: user_profile
+2025-08-04 22:57:08 - generation - WARNING - User ID: 1290100715
+2025-08-04 22:57:08 - generation - WARNING - До очистки: user_data={}
+2025-08-04 22:57:08 - generation - WARNING - Стек вызовов:
+2025-08-04 22:57:08 - generation - WARNING - File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+2025-08-04 22:57:08 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 3011, in user_callback_handler
+    await handle_user_callback(query, state)
+2025-08-04 22:57:08 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 193, in handle_user_callback
+    await handle_user_profile_callback(query, state, user_id)
+2025-08-04 22:57:08 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 1781, in handle_user_profile_callback
+    await reset_generation_context(state, "user_profile", user_id=user_id)
+2025-08-04 22:57:08 - generation - WARNING - File "D:\vsProjects\pizdec___bot\generation\utils.py", line 58, in reset_generation_context
+    stack = traceback.format_stack()
+2025-08-04 22:57:08 - generation - WARNING - === КОНЕЦ СТЕКА ===
+2025-08-04 22:57:08 - generation - INFO - Полная очистка контекста (тип: user_profile) для user_id=1290100715
+2025-08-04 22:57:08 - generation - INFO - После очистки: user_data={'user_id': 1290100715}
+2025-08-04 22:57:13 - generation - WARNING - === СБРОС КОНТЕКСТА ===
+2025-08-04 22:57:13 - generation - WARNING - Тип: user_profile
+2025-08-04 22:57:13 - generation - WARNING - User ID: 1290100715
+2025-08-04 22:57:13 - generation - WARNING - До очистки: user_data={}
+2025-08-04 22:57:13 - generation - WARNING - Стек вызовов:
+2025-08-04 22:57:13 - generation - WARNING - File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+2025-08-04 22:57:13 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 3011, in user_callback_handler
+    await handle_user_callback(query, state)
+2025-08-04 22:57:13 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 193, in handle_user_callback
+    await handle_user_profile_callback(query, state, user_id)
+2025-08-04 22:57:13 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 1781, in handle_user_profile_callback
+    await reset_generation_context(state, "user_profile", user_id=user_id)
+2025-08-04 22:57:13 - generation - WARNING - File "D:\vsProjects\pizdec___bot\generation\utils.py", line 58, in reset_generation_context
+    stack = traceback.format_stack()
+2025-08-04 22:57:13 - generation - WARNING - === КОНЕЦ СТЕКА ===
+2025-08-04 22:57:13 - generation - INFO - Полная очистка контекста (тип: user_profile) для user_id=1290100715
+2025-08-04 22:57:13 - generation - INFO - После очистки: user_data={'user_id': 1290100715}
+2025-08-04 22:57:35 - generation - WARNING - === СБРОС КОНТЕКСТА ===
+2025-08-04 22:57:35 - generation - WARNING - Тип: user_profile
+2025-08-04 22:57:35 - generation - WARNING - User ID: 1290100715
+2025-08-04 22:57:35 - generation - WARNING - До очистки: user_data={}
+2025-08-04 22:57:35 - generation - WARNING - Стек вызовов:
+2025-08-04 22:57:35 - generation - WARNING - File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+2025-08-04 22:57:35 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 3011, in user_callback_handler
+    await handle_user_callback(query, state)
+2025-08-04 22:57:35 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 193, in handle_user_callback
+    await handle_user_profile_callback(query, state, user_id)
+2025-08-04 22:57:35 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 1781, in handle_user_profile_callback
+    await reset_generation_context(state, "user_profile", user_id=user_id)
+2025-08-04 22:57:35 - generation - WARNING - File "D:\vsProjects\pizdec___bot\generation\utils.py", line 58, in reset_generation_context
+    stack = traceback.format_stack()
+2025-08-04 22:57:35 - generation - WARNING - === КОНЕЦ СТЕКА ===
+2025-08-04 22:57:35 - generation - INFO - Полная очистка контекста (тип: user_profile) для user_id=1290100715
+2025-08-04 22:57:35 - generation - INFO - После очистки: user_data={'user_id': 1290100715}
+2025-08-04 23:00:04 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 23:00:04 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 23:00:42 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 23:00:42 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 23:00:42 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 23:00:42 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 23:00:48 - generation - INFO - Полная очистка контекста (тип: start_command) для user_id=unknown
+2025-08-04 23:00:48 - generation - INFO - После очистки: user_data={}
+2025-08-04 23:00:53 - generation - INFO - Полная очистка контекста (тип: menu_command) для user_id=unknown
+2025-08-04 23:00:53 - generation - INFO - После очистки: user_data={}
+2025-08-04 23:01:04 - generation - INFO - Полная очистка контекста (тип: start_command) для user_id=5667999089
+2025-08-04 23:01:04 - generation - INFO - После очистки: user_data={'acting_as_user': True, 'user_id': 5667999089}
+2025-08-04 23:01:04 - generation - WARNING - === СБРОС КОНТЕКСТА ===
+2025-08-04 23:01:04 - generation - WARNING - Тип: user_profile
+2025-08-04 23:01:04 - generation - WARNING - User ID: 1290100715
+2025-08-04 23:01:04 - generation - WARNING - До очистки: user_data={}
+2025-08-04 23:01:04 - generation - WARNING - Стек вызовов:
+2025-08-04 23:01:04 - generation - WARNING - File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+2025-08-04 23:01:04 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 3011, in user_callback_handler
+    await handle_user_callback(query, state)
+2025-08-04 23:01:04 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 193, in handle_user_callback
+    await handle_user_profile_callback(query, state, user_id)
+2025-08-04 23:01:04 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 1781, in handle_user_profile_callback
+    await reset_generation_context(state, "user_profile", user_id=user_id)
+2025-08-04 23:01:04 - generation - WARNING - File "D:\vsProjects\pizdec___bot\generation\utils.py", line 58, in reset_generation_context
+    stack = traceback.format_stack()
+2025-08-04 23:01:04 - generation - WARNING - === КОНЕЦ СТЕКА ===
+2025-08-04 23:01:04 - generation - INFO - Полная очистка контекста (тип: user_profile) для user_id=1290100715
+2025-08-04 23:01:04 - generation - INFO - После очистки: user_data={'user_id': 1290100715}
+2025-08-04 23:19:33 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 23:19:33 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 23:19:33 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 23:19:33 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 23:19:38 - generation - INFO - Полная очистка контекста (тип: menu_command) для user_id=unknown
+2025-08-04 23:19:38 - generation - INFO - После очистки: user_data={}
+2025-08-04 23:19:51 - generation - WARNING - === СБРОС КОНТЕКСТА ===
+2025-08-04 23:19:51 - generation - WARNING - Тип: user_profile
+2025-08-04 23:19:51 - generation - WARNING - User ID: 1290100715
+2025-08-04 23:19:51 - generation - WARNING - До очистки: user_data={}
+2025-08-04 23:19:51 - generation - WARNING - Стек вызовов:
+2025-08-04 23:19:51 - generation - WARNING - File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+2025-08-04 23:19:51 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 3011, in user_callback_handler
+    await handle_user_callback(query, state)
+2025-08-04 23:19:51 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 193, in handle_user_callback
+    await handle_user_profile_callback(query, state, user_id)
+2025-08-04 23:19:51 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 1781, in handle_user_profile_callback
+    await reset_generation_context(state, "user_profile", user_id=user_id)
+2025-08-04 23:19:51 - generation - WARNING - File "D:\vsProjects\pizdec___bot\generation\utils.py", line 58, in reset_generation_context
+    stack = traceback.format_stack()
+2025-08-04 23:19:51 - generation - WARNING - === КОНЕЦ СТЕКА ===
+2025-08-04 23:19:51 - generation - INFO - Полная очистка контекста (тип: user_profile) для user_id=1290100715
+2025-08-04 23:19:51 - generation - INFO - После очистки: user_data={'user_id': 1290100715}
+2025-08-04 23:20:04 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 23:20:04 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 23:20:25 - generation - WARNING - === СБРОС КОНТЕКСТА ===
+2025-08-04 23:20:25 - generation - WARNING - Тип: my_avatars
+2025-08-04 23:20:25 - generation - WARNING - User ID: 1290100715
+2025-08-04 23:20:25 - generation - WARNING - До очистки: user_data={}
+2025-08-04 23:20:25 - generation - WARNING - Стек вызовов:
+2025-08-04 23:20:25 - generation - WARNING - File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+2025-08-04 23:20:25 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 3011, in user_callback_handler
+    await handle_user_callback(query, state)
+2025-08-04 23:20:25 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 207, in handle_user_callback
+    await handle_my_avatars_callback(query, state, user_id)
+2025-08-04 23:20:25 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 2353, in handle_my_avatars_callback
+    await reset_generation_context(state, "my_avatars", user_id=user_id)
+2025-08-04 23:20:25 - generation - WARNING - File "D:\vsProjects\pizdec___bot\generation\utils.py", line 58, in reset_generation_context
+    stack = traceback.format_stack()
+2025-08-04 23:20:25 - generation - WARNING - === КОНЕЦ СТЕКА ===
+2025-08-04 23:20:25 - generation - INFO - Полная очистка контекста (тип: my_avatars) для user_id=1290100715
+2025-08-04 23:20:25 - generation - INFO - После очистки: user_data={'user_id': 1290100715}
+2025-08-04 23:20:26 - generation - WARNING - === СБРОС КОНТЕКСТА ===
+2025-08-04 23:20:26 - generation - WARNING - Тип: train_flux
+2025-08-04 23:20:26 - generation - WARNING - User ID: 1290100715
+2025-08-04 23:20:26 - generation - WARNING - До очистки: user_data={}
+2025-08-04 23:20:26 - generation - WARNING - Стек вызовов:
+2025-08-04 23:20:26 - generation - WARNING - File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+2025-08-04 23:20:26 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 3011, in user_callback_handler
+    await handle_user_callback(query, state)
+2025-08-04 23:20:26 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 211, in handle_user_callback
+    await handle_train_flux_callback(query, state, user_id)
+2025-08-04 23:20:26 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 2438, in handle_train_flux_callback
+    await reset_generation_context(state, "train_flux", user_id=user_id)
+2025-08-04 23:20:26 - generation - WARNING - File "D:\vsProjects\pizdec___bot\generation\utils.py", line 58, in reset_generation_context
+    stack = traceback.format_stack()
+2025-08-04 23:20:26 - generation - WARNING - === КОНЕЦ СТЕКА ===
+2025-08-04 23:20:26 - generation - INFO - Полная очистка контекста (тип: train_flux) для user_id=1290100715
+2025-08-04 23:20:26 - generation - INFO - После очистки: user_data={'user_id': 1290100715}
+2025-08-04 23:21:34 - generation - ERROR - Попытка запуска обучения от бота с ID 7994897800
+2025-08-04 23:21:34 - generation - INFO - Используем user_id из состояния FSM: 1290100715
+2025-08-04 23:21:34 - generation - INFO - Запуск обучения для user_id=1290100715
+2025-08-04 23:21:34 - generation - INFO - Сгенерировано триггер-слово: piska7159365 для user_id=1290100715
+2025-08-04 23:21:34 - generation - INFO - Списан 1 аватар для user_id=1290100715 ПЕРЕД запуском обучения.
+2025-08-04 23:21:34 - generation - INFO - ZIP-архив создан: uploads/1290100715\train_photos_piska7159365_00071e.zip с 13 файлами.
+2025-08-04 23:21:36 - generation - ERROR - Ошибка Replicate при запуске обучения для user_id=1290100715: Invalid token
+Traceback (most recent call last):
+  File "D:\vsProjects\pizdec___bot\generation\training.py", line 234, in start_training
+    zip_url = await upload_image_to_replicate(zip_path)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\vsProjects\pizdec___bot\generation\images.py", line 1155, in upload_image_to_replicate
+    file_response = await loop.run_in_executor(None, upload_sync)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\domin\AppData\Local\Programs\Python\Python313\Lib\concurrent\futures\thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "D:\vsProjects\pizdec___bot\generation\images.py", line 1153, in upload_sync
+    return replicate_client.files.create(file=f)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\replicate\file.py", line 83, in create
+    resp = self._client._request(
+        "POST", "/v1/files", timeout=None, **_create_file_params(file, **params)
+    )
+  File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\replicate\client.py", line 89, in _request
+    _raise_for_status(resp)
+    ~~~~~~~~~~~~~~~~~^^^^^^
+  File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\replicate\client.py", line 407, in _raise_for_status
+    raise ReplicateError.from_response(resp)
+replicate.exceptions.ReplicateError: ReplicateError Details:
+status: 401
+detail: Invalid token
+2025-08-04 23:21:36 - generation - INFO - Возвращен 1 аватар для user_id=1290100715 из-за ReplicateError при обучении.
+2025-08-04 23:21:36 - generation - WARNING - === СБРОС КОНТЕКСТА ===
+2025-08-04 23:21:36 - generation - WARNING - Тип: train_flux_replicate_error
+2025-08-04 23:21:36 - generation - WARNING - User ID: 1290100715
+2025-08-04 23:21:36 - generation - WARNING - До очистки: user_data={'user_id': 1290100715, 'training_step': 'enter_avatar_name', 'training_photos': ['temp/1290100715_079a7271-dfdb-4afa-825c-22efa7b0f283.jpg', 'temp/1290100715_b1733b7c-ef73-458a-bf0a-d6bdb0749337.jpg', 'temp/1290100715_8c5b9196-56eb-421c-92bb-bde754619c82.jpg', 'temp/1290100715_b40488c4-519b-49a7-a34c-51dd81fa16ee.jpg', 'temp/1290100715_d6ddb3cb-10da-41a9-9c96-83666fa6fa2b.jpg', 'temp/1290100715_cfc033ad-ff8e-41ce-92fe-20466e2e631d.jpg', 'temp/1290100715_ee4dd06b-2b16-41cc-b376-0270f7497c4e.jpg', 'temp/1290100715_11a70121-a884-4819-9561-b81d9b6bed98.jpg', 'temp/1290100715_986036b6-8564-4a8d-8414-65e0a85a756d.jpg', 'temp/1290100715_b875454d-d446-421e-b886-f9afea0ed8cf.jpg', 'temp/1290100715_3fcf3ce0-fb13-4038-8084-3bc37369f48a.jpg', 'temp/1290100715_6a02154f-6d7d-476c-859f-391d38300d49.jpg', 'temp/1290100715_b9a5a371-8505-4eb6-98bb-9fc2df4d7018.jpg'], 'processed_media_groups': set(), 'avatar_name': 'piska', 'trigger_word': 'piska7159365'}
+2025-08-04 23:21:36 - generation - WARNING - Стек вызовов:
+2025-08-04 23:21:36 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\utils.py", line 845, in __call__
+    return await handler(event, data)
+2025-08-04 23:21:36 - generation - WARNING - File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+2025-08-04 23:21:36 - generation - WARNING - File "D:\vsProjects\pizdec___bot\generation\training.py", line 703, in handle_confirm_training_callback
+    await start_training(query.message, state)
+2025-08-04 23:21:36 - generation - WARNING - File "D:\vsProjects\pizdec___bot\generation\training.py", line 323, in start_training
+    await reset_generation_context(state, 'train_flux_replicate_error')
+2025-08-04 23:21:36 - generation - WARNING - File "D:\vsProjects\pizdec___bot\generation\utils.py", line 58, in reset_generation_context
+    stack = traceback.format_stack()
+2025-08-04 23:21:36 - generation - WARNING - === КОНЕЦ СТЕКА ===
+2025-08-04 23:21:36 - generation - INFO - Полная очистка контекста (тип: train_flux_replicate_error) для user_id=1290100715
+2025-08-04 23:21:36 - generation - INFO - После очистки: user_data={'user_id': 1290100715, 'training_step': 'enter_avatar_name', 'training_photos': ['temp/1290100715_079a7271-dfdb-4afa-825c-22efa7b0f283.jpg', 'temp/1290100715_b1733b7c-ef73-458a-bf0a-d6bdb0749337.jpg', 'temp/1290100715_8c5b9196-56eb-421c-92bb-bde754619c82.jpg', 'temp/1290100715_b40488c4-519b-49a7-a34c-51dd81fa16ee.jpg', 'temp/1290100715_d6ddb3cb-10da-41a9-9c96-83666fa6fa2b.jpg', 'temp/1290100715_cfc033ad-ff8e-41ce-92fe-20466e2e631d.jpg', 'temp/1290100715_ee4dd06b-2b16-41cc-b376-0270f7497c4e.jpg', 'temp/1290100715_11a70121-a884-4819-9561-b81d9b6bed98.jpg', 'temp/1290100715_986036b6-8564-4a8d-8414-65e0a85a756d.jpg', 'temp/1290100715_b875454d-d446-421e-b886-f9afea0ed8cf.jpg', 'temp/1290100715_3fcf3ce0-fb13-4038-8084-3bc37369f48a.jpg', 'temp/1290100715_6a02154f-6d7d-476c-859f-391d38300d49.jpg', 'temp/1290100715_b9a5a371-8505-4eb6-98bb-9fc2df4d7018.jpg'], 'processed_media_groups': set(), 'avatar_name': 'piska', 'trigger_word': 'piska7159365'}
+2025-08-04 23:25:00 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 23:25:00 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 23:30:04 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 23:30:04 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 23:35:00 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 23:35:00 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 23:40:04 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 23:40:04 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 23:45:00 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 23:45:00 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 23:50:04 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-04 23:50:04 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 23:55:00 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-04 23:55:00 - generation - INFO - Нет незавершенных задач обучения для проверки.

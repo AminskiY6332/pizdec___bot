@@ -11,7 +11,7 @@ from typing import Dict, Optional, Any
 import pytz
 import aiosqlite
 from generation_config import GENERATION_TYPE_TO_MODEL_KEY
-from handlers.onboarding import setup_onboarding_handlers, onboarding_router, schedule_welcome_message, schedule_daily_reminders, send_onboarding_message, send_daily_reminders
+from handlers.user.onboarding import setup_onboarding_handlers, onboarding_router, schedule_welcome_message, schedule_daily_reminders, send_onboarding_message, send_daily_reminders
 from aiogram import Bot, Dispatcher
 from aiogram.types import Update, InlineKeyboardMarkup, InlineKeyboardButton, Message, ContentType
 from aiogram.enums import ParseMode
@@ -32,12 +32,13 @@ from database import (
     mark_welcome_message_sent, block_user_access, update_user_credits, retry_on_locked, get_broadcast_buttons,
     start_periodic_tasks, backup_database
 )
-from handlers.commands import start, menu, help_command, check_training, debug_avatars, addcook, delcook, addnew, delnew, user_id_info
+from handlers.user.commands import start, menu, help_command, check_training
+from handlers.commands import debug_avatars, addcook, delcook, addnew, delnew, user_id_info
 from handlers.messages import (
     handle_photo, handle_admin_text, handle_video,
     award_referral_bonuses, handle_text
 )
-from handlers.errors import error_handler
+from handlers.system.errors import error_handler
 from handlers.admin_panel import send_daily_payments_report
 from handlers.visualization import handle_activity_dates_input
 from handlers.user_management import (
@@ -54,8 +55,8 @@ from handlers.callbacks_admin import (
     handle_admin_custom_prompt, handle_admin_send_generation, handle_admin_regenerate, admin_callbacks_router
 )
 from handlers.callbacks_user import handle_user_callback, user_callbacks_router
-from handlers.callbacks_utils import utils_callback_handler, utils_callbacks_router
-from handlers.callbacks_referrals import referrals_callback_handler, referrals_callbacks_router
+from handlers.system.utils import utils_callback_handler, utils_callbacks_router
+from handlers.system.referrals import referrals_callback_handler, referrals_callbacks_router
 from generation import check_pending_trainings, check_pending_video_tasks
 from keyboards import create_main_menu_keyboard
 from fsm_handlers import setup_conversation_handler, fsm_router, BotStates
