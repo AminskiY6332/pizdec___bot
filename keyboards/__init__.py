@@ -1,16 +1,22 @@
-from keyboards.base import (
+# keyboards/__init__.py
+"""
+Модуль клавиатур для Telegram бота
+Содержит все инлайн-клавиатуры, организованные по функциональности
+"""
+
+from .base import (
     create_back_keyboard,
     create_confirmation_keyboard,
     create_error_keyboard
 )
 
-from keyboards.main_menu import (
+from .main_menu import (
     create_main_menu_keyboard,
     create_photo_generate_menu_keyboard,
     create_video_generate_menu_keyboard
 )
 
-from keyboards.generation import (
+from .generation import (
     create_style_selection_keyboard,
     create_aspect_ratio_keyboard,
     create_avatar_style_choice_keyboard,
@@ -21,7 +27,7 @@ from keyboards.generation import (
     create_generation_in_progress_keyboard
 )
 
-from keyboards.user_profile import (
+from .user_profile import (
     create_user_profile_keyboard,
     create_avatar_selection_keyboard,
     create_training_keyboard,
@@ -29,35 +35,35 @@ from keyboards.user_profile import (
     create_payment_success_keyboard
 )
 
-from keyboards.admin import (
+from .admin import (
     create_admin_keyboard,
     create_admin_user_actions_keyboard
 )
 
-from keyboards.payments import (
+from .payments import (
     create_subscription_keyboard,
     create_payment_only_keyboard
 )
 
-from keyboards.support import (
+from .support import (
     create_faq_keyboard,
     create_support_keyboard,
     create_referral_keyboard
 )
 
-from keyboards.broadcast import (
+from .broadcast import (
     create_broadcast_keyboard,
     create_broadcast_with_payment_audience_keyboard,
     create_dynamic_broadcast_keyboard
 )
 
-from keyboards.utils import (
+from .utils import (
     create_photo_upload_keyboard,
     create_video_status_keyboard,
     send_avatar_training_message
 )
 
-# Экспорт всех функций для обратной совместимости
+# Экспорт всех клавиатур для обратной совместимости
 __all__ = [
     # Base keyboards
     'create_back_keyboard',
@@ -108,47 +114,4 @@ __all__ = [
     'create_photo_upload_keyboard',
     'create_video_status_keyboard',
     'send_avatar_training_message'
-]
-
-# Дополнительные функции для совместимости со старым кодом
-def get_tariff_text(tariff_key: str) -> str:
-    """Получает текст тарифа для отображения."""
-    from config import TARIFFS
-    tariff = TARIFFS.get(tariff_key, {})
-    return tariff.get('display', f'Тариф {tariff_key}')
-
-# Константы для обратной совместимости
-ASPECT_RATIOS = {
-    "1:1": {"display": "1:1 📱 Квадрат", "width": 1024, "height": 1024},
-    "16:9": {"display": "16:9 🖥️ Широкоформатный", "width": 1920, "height": 1080},
-    "4:3": {"display": "4:3 📺 Классический", "width": 1024, "height": 768},
-    "5:4": {"display": "5:4 🖼️ Альбомный", "width": 1280, "height": 1024},
-    "9:16": {"display": "9:16 📲 Stories", "width": 1080, "height": 1920},
-    "9:21": {"display": "9:21 📱 Ультра-вертикальный", "width": 1080, "height": 2520},
-    "3:4": {"display": "3:4 👤 Портретный", "width": 768, "height": 1024},
-    "4:5": {"display": "4:5 📖 Книжный", "width": 1080, "height": 1350},
-    "21:9": {"display": "21:9 🎬 Кинематографический", "width": 2560, "height": 1097},
-    "2:3": {"display": "2:3 📷 Фото", "width": 1024, "height": 1536},
-    "1.1:1": {"display": "1.1:1 📐 Слегка горизонтальный", "width": 1126, "height": 1024}
-}
-
-
-"""
-🎯 КАК ПЕРЕЙТИ НА НОВУЮ СТРУКТУРУ:
-
-1. СОХРАНИТЕ СТАРЫЙ ФАЙЛ:
-   mv keyboards.py keyboards_old.py
-
-2. ПЕРЕИМЕНУЙТЕ НОВЫЙ ФАЙЛ:
-   mv keyboards_new.py keyboards.py
-
-3. ПРОВЕРЬТЕ ИМПОРТЫ:
-   Все старые импорты продолжат работать!
-
-4. УДАЛИТЕ СТАРЫЙ ФАЙЛ (после тестирования):
-   rm keyboards_old.py
-
-✅ Обратная совместимость гарантирована!
-✅ Все функции работают как прежде
-✅ Код стал намного чище и организованнее
-""" 
+] 

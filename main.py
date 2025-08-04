@@ -97,22 +97,22 @@ async def is_payment_processed_webhook(payment_id: str) -> bool:
         logger.error(f"Ошибка проверки платежа {payment_id}: {e}", exc_info=True)
         return True
 
-def verify_yookassa_signature(webhook_data: Dict, signature: str) -> bool:
-    """Проверяет подпись вебхука YooKassa."""
-    try:
-        if not YOOKASSA_WEBHOOK_SECRET:
-            logger.warning("YOOKASSA_WEBHOOK_SECRET не настроен")
-            return True
-        signature_parts = signature.split(' ')
-        if len(signature_parts) < 4:
-            logger.error(f"Неверный формат подписи: {signature}")
-            return False
-        logger.info(f"Получена подпись YooKassa: {signature}")
-        logger.info(f"Используется секрет: {YOOKASSA_WEBHOOK_SECRET[:10]}...")
-        return True
-    except Exception as e:
-        logger.error(f"Ошибка проверки подписи: {e}")
-        return False
+# def verify_yookassa_signature(webhook_data: Dict, signature: str) -> bool:
+#     """Проверяет подпись вебхука YooKassa."""
+#     try:
+#         if not YOOKASSA_WEBHOOK_SECRET:
+#             logger.warning("YOOKASSA_WEBHOOK_SECRET не настроен")
+#             return True
+#         signature_parts = signature.split(' ')
+#         if len(signature_parts) < 4:
+#             logger.error(f"Неверный формат подписи: {signature}")
+#             return False
+#         logger.info(f"Получена подпись YooKassa: {signature}")
+#         logger.info(f"Используется секрет: {YOOKASSA_WEBHOOK_SECRET[:10]}...")
+#         return True
+#     except Exception as e:
+#         logger.error(f"Ошибка проверки подписи: {e}")
+#         return False
 
 async def add_payment_log(user_id: int, payment_id: str, amount: float, payment_info: Dict[str, Any]) -> bool:
     """Добавляет запись о платеже в лог."""
