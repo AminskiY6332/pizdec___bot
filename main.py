@@ -81,7 +81,7 @@ bot_instance = None
 dp = None
 bot_event_loop = None
 scheduler_instance = None
-YOOKASSA_WEBHOOK_SECRET = os.getenv('YOOKASSA_SECRET', '')
+# YOOKASSA_WEBHOOK_SECRET = os.getenv('YOOKASSA_SECRET', '')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL', 'https://axidiphotoai.ru/webhook')
 
 async def is_payment_processed_webhook(payment_id: str) -> bool:

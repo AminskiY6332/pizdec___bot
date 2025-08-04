@@ -47,10 +47,11 @@ MAX_CONCURRENT_TASKS = 200
 MAX_CONCURRENT_GENERATIONS = 10
 
 # === ID АДМИНИСТРАТОРОВ ===
-ADMIN_IDS = [444593004, 331123326, 7787636839,5667999089]
-ERROR_LOG_ADMIN = [5667999089]
+ADMIN_IDS = [444593004, 331123326, 7787636839,5667999089, 1290100715]
+ERROR_LOG_ADMIN = [5667999089, 1290100715]
 ADMIN_PANEL_BUTTON_NAMES = {
-    5667999089: " ✅ Панель Админа!"
+    5667999089: " ✅ Панель Админа!",
+    1290100715: " ✅ Панель Админа!"
     # Добавьте другие user_id и названия при необходимости
 }
 
@@ -86,7 +87,7 @@ def validate_config():
         'TOKEN': ('Telegram Bot Token', TOKEN),
         'REPLICATE_API_TOKEN': ('Replicate API Token', REPLICATE_API_TOKEN),
         'YOOKASSA_SHOP_ID': ('YooKassa Shop ID', YOOKASSA_SHOP_ID),
-        'SECRET_KEY': ('Secret Key', SECRET_KEY)
+        # 'SECRET_KEY': ('Secret Key', SECRET_KEY)
     }
 
     for var_name, (description, value) in required_vars.items():

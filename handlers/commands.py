@@ -359,33 +359,33 @@ async def start(message: Message, state: FSMContext) -> None:
             ]
         )
 
-    # Отправляем приветственное сообщение
-    video_path = "images/welcome.mp4"
-    try:
-        if os.path.exists(video_path):
-            video_file = FSInputFile(path=video_path)
-            video_message = await bot.send_video(
-                chat_id=user_id,
-                video=video_file,
-                caption=welcome_text,
-                reply_markup=reply_markup,
-                parse_mode=ParseMode.MARKDOWN_V2
-            )
-            logger.debug(f"Видео приветствия отправлено для user_id={user_id}, message_id={video_message.message_id}")
-        else:
-            logger.warning(f"Видео не найдено по пути: {video_path} для user_id={user_id}")
-            await message.answer(
-                welcome_text,
-                reply_markup=reply_markup,
-                parse_mode=ParseMode.MARKDOWN_V2
-            )
-    except Exception as e:
-        logger.error(f"Не удалось отправить видео для user_id={user_id}: {e}", exc_info=True)
-        await message.answer(
-            welcome_text,
-            reply_markup=reply_markup,
-            parse_mode=ParseMode.MARKDOWN_V2
-        )
+    # # Отправляем приветственное сообщение
+    # video_path = "images/welcome.mp4"
+    # try:
+    #     if os.path.exists(video_path):
+    #         video_file = FSInputFile(path=video_path)
+    #         video_message = await bot.send_video(
+    #             chat_id=user_id,
+    #             video=video_file,
+    #             caption=welcome_text,
+    #             reply_markup=reply_markup,
+    #             parse_mode=ParseMode.MARKDOWN_V2
+    #         )
+    #         logger.debug(f"Видео приветствия отправлено для user_id={user_id}, message_id={video_message.message_id}")
+    #     else:
+    #         logger.warning(f"Видео не найдено по пути: {video_path} для user_id={user_id}")
+    #         await message.answer(
+    #             welcome_text,
+    #             reply_markup=reply_markup,
+    #             parse_mode=ParseMode.MARKDOWN_V2
+    #         )
+    # except Exception as e:
+    #     logger.error(f"Не удалось отправить видео для user_id={user_id}: {e}", exc_info=True)
+    #     await message.answer(
+    #         welcome_text,
+    #         reply_markup=reply_markup,
+    #         parse_mode=ParseMode.MARKDOWN_V2
+    #     )
 
     # Планируем онбординговые напоминания только для новых неоплативших пользователей
     if not is_paying_user and not is_old_user_flag:
