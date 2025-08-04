@@ -1,0 +1,42 @@
+[Unit]
+Description=Axidi Photo AI Bot
+Documentation=https://axidiphotoai.ru
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+User=root
+Group=root
+WorkingDirectory=/root/axidi_pr_v1
+
+# Переменные окружения
+EnvironmentFile=-/root/axidi_pr_v1/.env
+
+# Команды запуска и остановки
+ExecStart=/root/axidi_pr_v1/start_axidi_bot.sh
+ExecStop=/root/axidi_pr_v1/stop_axidi_bot.sh
+ExecReload=/root/axidi_pr_v1/restart_axidi_bot.sh
+
+# Настройки перезапуска
+Restart=always
+RestartSec=10
+StartLimitInterval=120
+StartLimitBurst=3
+
+# Таймауты
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+# Безопасность
+NoNewPrivileges=false
+ProtectSystem=false
+ProtectHome=false
+
+# Логирование
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=axidi-bot
+
+[Install]
+WantedBy=multi-user.target

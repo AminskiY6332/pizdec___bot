@@ -1,0 +1,27 @@
+# Простая Gunicorn конфигурация (без сложного production)
+import multiprocessing
+import os
+
+# === ОСНОВНЫЕ НАСТРОЙКИ ===
+bind = "0.0.0.0:8000"  # Порт для YooKassa webhook
+workers = 2  # Простая настройка
+worker_class = "sync"
+timeout = 60
+
+# === ЛОГИРОВАНИЕ ===
+# Создаем простую директорию для логов
+os.makedirs("/var/log/axidi", exist_ok=True)
+
+loglevel = "info"
+accesslog = "/var/log/axidi/access.log"
+errorlog = "/var/log/axidi/error.log"
+
+# === ПРОЦЕСС ===
+daemon = False
+reload = False
+preload_app = True
+
+print("🚀 Простая Gunicorn конфигурация загружена")
+print(f"👥 Workers: {workers}")
+print(f"🌐 Bind: {bind}")
+print(f"🔧 Порт настроен на 8000 для YooKassa webhook")

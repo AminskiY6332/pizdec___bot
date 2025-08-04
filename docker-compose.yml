@@ -1,0 +1,178 @@
+# 🐋 Docker Compose для AXIDI Telegram Bot
+version: '3.8'
+
+services:
+  # Основное приложение бота
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: axidi_bot
+    restart: unless-stopped
+    depends_on:
+      - redis
+    environment:
+      # Основные настройки
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
+      - REPLICATE_USERNAME_OR_ORG_NAME=${REPLICATE_USERNAME_OR_ORG_NAME:-axidiagensy}
+
+      # YooKassa настройки
+      - YOOKASSA_SHOP_ID=${YOOKASSA_SHOP_ID}
+      - SECRET_KEY=${SECRET_KEY}
+      - YOOKASSA_SECRET=${YOOKASSA_SECRET}
+      - YOOKASSA_TEST_TOKEN=${YOOKASSA_TEST_TOKEN}
+
+      # База данных и кэш
+      - DATABASE_PATH=/app/data/users.db
+      - REDIS_URL=redis://redis:6379/0
+
+      # Веб-хуки
+      - WEBHOOK_URL=${WEBHOOK_URL:-https://axidiphotoai.ru/webhook}
+
+      # Производительность
+      - CACHE_TTL_SECONDS=300
+      - MAX_CONCURRENT_TASKS=200
+      - MAX_CONCURRENT_GENERATIONS=10
+      - RATE_LIMIT_MAX_REQUESTS=50
+      - RATE_LIMIT_WINDOW_MINUTES=1
+      - MAX_FILE_SIZE_MB=50
+
+      # Бэкапы
+      - BACKUP_ENABLED=true
+      - BACKUP_INTERVAL_HOURS=24
+
+      # Среда выполнения
+      - ENVIRONMENT=production
+      - PYTHONUNBUFFERED=1
+
+    volumes:
+      # Персистентные данные
+      - bot_data:/app/data
+      - bot_logs:/app/logs
+      - bot_backups:/app/backups
+      - bot_uploads:/app/uploads
+      - bot_temp:/app/temp
+      - bot_generated:/app/generated
+
+      # Конфигурации (опционально)
+      - ./docker/production.env:/app/.env:ro
+
+    ports:
+      - "5001:5001"  # Flask веб-сервер (только для отладки)
+    expose:
+      - "5001"       # Внутренний порт для nginx
+
+    networks:
+      - axidi_network
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  # Redis для кэширования
+  redis:
+    image: redis:7-alpine
+    container_name: axidi_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - axidi_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # Nginx (опционально, для production)
+  nginx:
+    image: nginx:alpine
+    container_name: axidi_nginx
+    restart: unless-stopped
+    depends_on:
+      - bot
+    ports:
+      - "443:443"
+      - "8080:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - axidi_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # Мониторинг (опционально)
+  watchtower:
+    image: containrrr/watchtower
+    container_name: axidi_watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_INCLUDE_STOPPED=true
+      - WATCHTOWER_SCHEDULE=0 0 2 * * *  # Каждый день в 2:00
+    networks:
+      - axidi_network
+
+# Сети
+networks:
+  axidi_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# Постоянные тома
+volumes:
+  bot_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data
+  bot_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs
+  bot_backups:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./backups
+  bot_uploads:
+    driver: local
+  bot_temp:
+    driver: local
+  bot_generated:
+    driver: local
+  redis_data:
+    driver: local
+  nginx_logs:
+    driver: local

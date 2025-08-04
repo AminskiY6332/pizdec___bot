@@ -1,0 +1,146 @@
+{
+  "avatars": {
+    "successful_count": 0,
+    "training_count": 0,
+    "failed_count": 0,
+    "successful_avatars": [],
+    "training_avatars": [],
+    "failed_avatars": []
+  },
+  "payments": {
+    "total_payments": 9,
+    "successful_payments": 9,
+    "failed_payments": 0,
+    "total_amount": 180.0,
+    "recent_payments": [
+      [
+        5667999089,
+        "тест",
+        10.0,
+        "succeeded",
+        "2025-08-04T08:48:39+03:00",
+        "test-webhook-check-12345",
+        "SHIM_H264",
+        "Александр"
+      ],
+      [
+        5667999089,
+        "тест",
+        10.0,
+        "succeeded",
+        "2025-08-04T08:43:35+03:00",
+        "30225b94-000f-5000-b000-10f919a3e0fe",
+        "SHIM_H264",
+        "Александр"
+      ],
+      [
+        5667999089,
+        "тест",
+        10.0,
+        "succeeded",
+        "2025-08-04T08:35:02+03:00",
+        "302258c0-000f-5001-8000-155f4193bff8",
+        "SHIM_H264",
+        "Александр"
+      ],
+      [
+        5667999089,
+        "тест",
+        10.0,
+        "succeeded",
+        "2025-08-04T08:25:54+03:00",
+        "302257f1-000f-5001-8000-10c69a079527",
+        "SHIM_H264",
+        "Александр"
+      ],
+      [
+        5667999089,
+        "тест",
+        10.0,
+        "succeeded",
+        "2025-08-04T08:22:02+03:00",
+        "test_standalone_direct",
+        "SHIM_H264",
+        "Александр"
+      ],
+      [
+        5667999089,
+        "тест",
+        10.0,
+        "succeeded",
+        "2025-08-04T08:21:51+03:00",
+        "test_standalone_payment",
+        "SHIM_H264",
+        "Александр"
+      ],
+      [
+        5667999089,
+        "тест",
+        10.0,
+        "succeeded",
+        "2025-08-04T08:20:40+03:00",
+        "manual_fix_payment_1754284839",
+        "SHIM_H264",
+        "Александр"
+      ],
+      [
+        5667999089,
+        "тест",
+        10.0,
+        "succeeded",
+        "2025-08-04T07:48:35+03:00",
+        "test_10_final",
+        "SHIM_H264",
+        "Александр"
+      ],
+      [
+        5667999089,
+        "тест",
+        100.0,
+        "succeeded",
+        "2025-08-04T07:47:00+03:00",
+        "final_test_100_rub",
+        "SHIM_H264",
+        "Александр"
+      ]
+    ]
+  },
+  "critical_errors": {
+    "errors_found": 5,
+    "critical_errors": [
+      {
+        "file": "bot.log",
+        "line": "2025-08-04 05:28:16,543 - apscheduler.scheduler - INFO - Added job \"BotMonitoringSystem.check_critical_errors\" to job store \"default\"",
+        "keyword": "CRITICAL"
+      },
+      {
+        "file": "bot.log",
+        "line": "2025-08-04 05:40:28,464 - apscheduler.scheduler - INFO - Added job \"BotMonitoringSystem.check_critical_errors\" to job store \"default\"",
+        "keyword": "CRITICAL"
+      },
+      {
+        "file": "bot.log",
+        "line": "2025-08-04 05:44:55,820 - apscheduler.scheduler - INFO - Added job \"BotMonitoringSystem.check_critical_errors\" to job store \"default\"",
+        "keyword": "CRITICAL"
+      },
+      {
+        "file": "logs/errors.log",
+        "line": "2025-08-04 03:40:15 - errors - ERROR - Ошибка в обработке: MemoryError: Out of memory",
+        "keyword": "MemoryError"
+      },
+      {
+        "file": "logs/errors.log",
+        "line": "2025-08-04 03:40:15 - errors - ERROR - Ошибка в обработке: Disk full",
+        "keyword": "Disk full"
+      }
+    ]
+  },
+  "system_health": {
+    "db_size_mb": 10.59,
+    "log_size_mb": 0.96,
+    "free_space_gb": 7.62,
+    "total_users": 17985,
+    "new_users_today": 3,
+    "warnings": []
+  }
+}
