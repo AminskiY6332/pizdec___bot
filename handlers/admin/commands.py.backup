@@ -41,7 +41,7 @@ from database import (
 )
 from keyboards import create_main_menu_keyboard, create_subscription_keyboard, create_user_profile_keyboard, create_payment_only_keyboard
 from generation import reset_generation_context, check_training_status
-from handlers.utils import safe_escape_markdown as escape_md, smart_message_send, smart_message_send_with_photo, get_tariff_text, send_message_with_fallback
+from handlers.utils import safe_escape_markdown as escape_md, get_tariff_text, send_message_with_fallback
 from ..user.onboarding import send_onboarding_message, schedule_welcome_message, schedule_daily_reminders
 from bot_counter import bot_counter
 

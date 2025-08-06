@@ -1,3 +1,5 @@
+# handlers/admin/panels.py
+
 import asyncio
 import logging
 import uuid
@@ -16,125 +18,22 @@ import aiosqlite
 from config import ADMIN_IDS, DATABASE_PATH
 from keyboards import create_admin_keyboard, create_main_menu_keyboard
 from handlers.utils import (
-    safe_escape_markdown as escape_md, truncate_text, safe_edit_message, debug_markdown_text
+    safe_escape_markdown as escape_md, truncate_text, safe_edit_message, debug_markdown_text,
+    get_bot_summary_stats
 )
-import aiosqlite
 from excel_utils import create_payments_excel, create_registrations_excel
 import os
 
 logger = logging.getLogger(__name__)
 
-async def get_bot_summary_stats() -> str:
-    """Получает общую статистику бота для отображения в админ-панели"""
-    try:
-        async with aiosqlite.connect(DATABASE_PATH) as conn:
-            conn.row_factory = aiosqlite.Row
-            c = await conn.cursor()
 
-            # Общее количество пользователей
-            await c.execute("SELECT COUNT(*) as total FROM users")
-            total_users = (await c.fetchone())['total']
 
-            # Количество оплативших пользователей
-            await c.execute("""
-                SELECT COUNT(DISTINCT user_id) as paid_users
-                FROM payments
-                WHERE status = 'succeeded'
-            """)
-            paid_users = (await c.fetchone())['paid_users']
-
-            # Общее количество платежей
-            await c.execute("""
-                SELECT COUNT(*) as total_payments, COALESCE(SUM(amount), 0) as total_amount
-                FROM payments
-                WHERE status = 'succeeded'
-            """)
-            payment_stats = await c.fetchone()
-            total_payments = payment_stats['total_payments']
-            total_amount = payment_stats['total_amount']
-
-            # Количество созданных аватаров
-            await c.execute("""
-                SELECT 
-                    COUNT(*) as total_avatars,
-                    COUNT(CASE WHEN status = 'success' THEN 1 END) as successful_avatars
-                FROM user_trainedmodels
-            """)
-            avatar_stats = await c.fetchone()
-            total_avatars = avatar_stats['total_avatars']
-            successful_avatars = avatar_stats['successful_avatars']
-
-            # Количество генераций за последние 30 дней
-            await c.execute("""
-                SELECT COUNT(*) as recent_generations
-                FROM generation_log 
-                WHERE created_at >= date('now', '-30 days')
-            """)
-            recent_generations = (await c.fetchone())['recent_generations']
-            
-            # Статистика за сегодня
-            await c.execute("""
-                SELECT COUNT(*) as new_users_today
-                FROM users 
-                WHERE date(created_at) = date('now')
-            """)
-            new_users_today = (await c.fetchone())['new_users_today']
-            
-            await c.execute("""
-                SELECT COUNT(*) as payments_today
-                FROM payments 
-                WHERE status = 'succeeded' AND date(created_at) = date('now')
-            """)
-            payments_today = (await c.fetchone())['payments_today']
-            
-            await c.execute("""
-                SELECT COUNT(DISTINCT user_id) as subscriptions_today
-                FROM payments 
-                WHERE status = 'succeeded' AND date(created_at) = date('now')
-            """)
-            subscriptions_today = (await c.fetchone())['subscriptions_today']
-            
-            # Процент оплативших
-            paid_percentage = (paid_users / total_users * 100) if total_users > 0 else 0
-            
-            # Формируем простой текст без форматирования
-            summary = f"""🛠 Админ-панель:
-
-📊 Общая статистика бота:
-👥 Всего пользователей: {total_users}
-💰 Оплатили: {paid_users} ({paid_percentage:.1f}%)
-💳 Всего платежей: {total_payments} на {total_amount:.0f}₽
-
-🎭 Аватары:
-🖼 Всего создано: {total_avatars}
-✅ Успешных: {successful_avatars}
-
-📈 Активность:
-🔥 Генераций за 30 дней: {recent_generations}
-
-📅 За сегодня:
-🆕 Новых пользователей: {new_users_today}
-💳 Оплат: {payments_today}
-📝 Подписок: {subscriptions_today}
-
-Выберите действие:"""
-
-            return summary
-
-    except Exception as e:
-        logger.error(f"Ошибка получения статистики бота: {e}", exc_info=True)
-        return f"""🛠 Админ-панель:
-
-❌ Ошибка загрузки статистики
-
-Выберите действие:"""
-
-async def admin_panel(message: Message, state: FSMContext, user_id: Optional[int] = None) -> None:
+async def admin_panel(callback_query: CallbackQuery, state: FSMContext, user_id: Optional[int] = None) -> None:
     """Показывает главное меню админ-панели с общей статистикой."""
-    user_id = user_id or message.from_user.id
+    user_id = user_id or callback_query.from_user.id
     logger.info(f"Попытка входа в админ-панель: user_id={user_id}, ADMIN_IDS={ADMIN_IDS}")
     if user_id not in ADMIN_IDS:
-        await message.answer("❌ У вас нет прав.")
+        await callback_query.answer("❌ У вас нет прав.", show_alert=True)
         return
     await state.clear()
 
@@ -142,10 +41,11 @@ async def admin_panel(message: Message, state: FSMContext, user_id: Optional[int
     text = await get_bot_summary_stats()
 
     reply_markup = await create_admin_keyboard()
-    await message.answer(
+    await callback_query.message.edit_text(
         text,
         reply_markup=reply_markup
     )
+    await callback_query.answer()
     logger.debug(f"Админ-панель открыта для user_id={user_id}")
 
 async def show_admin_stats(callback_query: CallbackQuery, state: FSMContext, page: int = 1) -> None:
@@ -603,3 +503,16 @@ async def cancel(message: Message, state: FSMContext) -> None:
         parse_mode=ParseMode.MARKDOWN_V2
     )
     logger.debug(f"Действия отменены для user_id={user_id}")
+
+# Создание роутера для админских панелей
+from aiogram import Router
+from aiogram import F
+
+admin_panels_router = Router()
+
+# Регистрация callback'ов
+admin_panels_router.callback_query.register(admin_panel, F.data == "admin_panel")
+admin_panels_router.callback_query.register(show_admin_stats, F.data == "admin_stats")
+admin_panels_router.callback_query.register(admin_show_failed_avatars, F.data == "admin_failed_avatars")
+admin_panels_router.callback_query.register(admin_confirm_delete_all_failed, F.data == "admin_confirm_delete_failed")
+admin_panels_router.callback_query.register(admin_execute_delete_all_failed, F.data == "admin_execute_delete_failed")

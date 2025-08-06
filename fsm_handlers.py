@@ -8,15 +8,16 @@ from aiogram.types import Message, CallbackQuery, ContentType
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ParseMode
-from handlers.commands import start, menu, check_training, debug_avatars, help_command
+from handlers.user.commands import start, menu, check_training, help_command
+from handlers.admin.commands import debug_avatars
 from handlers.utils import safe_escape_markdown as escape_md
-from handlers.messages import handle_photo, handle_text, handle_admin_text, handle_video
-from handlers.broadcast import handle_broadcast_message, handle_broadcast_button_input, handle_broadcast_schedule_time, handle_broadcast_media
-from handlers.payments import handle_payments_date_input
-from handlers.user_management import handle_balance_change_input, handle_block_reason_input, handle_user_search_input, cancel
-from handlers.visualization import handle_activity_dates_input
-from handlers.callbacks_admin import handle_admin_custom_prompt
-from handlers.callbacks_user import (
+from handlers.user.messages import handle_photo, handle_text, handle_video, handle_admin_text
+
+from handlers.admin.payments import handle_payments_date_input
+from handlers.admin.user_management import handle_balance_change_input, handle_block_reason_input, handle_user_search_input, cancel
+from handlers.admin.visualization import handle_activity_dates_input
+from handlers.admin.generation import handle_admin_custom_prompt
+from handlers.user.callbacks import (
     handle_confirm_photo_quality_callback, handle_continue_upload_callback,
     handle_style_selection_callback, handle_style_choice_callback,
     handle_male_styles_page_callback, handle_female_styles_page_callback,
@@ -28,10 +29,10 @@ from generation.videos import handle_video_prompt, handle_video_photo, handle_sk
 from config import ADMIN_IDS, DATABASE_PATH
 from keyboards import create_main_menu_keyboard
 # УДАЛЕНО: from bot_counter import cmd_bot_name
-from utils import clear_user_data
+from handlers.admin.broadcast import clear_user_data
 import aiosqlite
 from states import BotStates, VideoStates
-from generation.training import TrainingStates, handle_confirmation, handle_confirm_training_callback
+from generation.training import TrainingStates, handle_confirmation
 
 from logger import get_logger
 logger = get_logger('main')
@@ -235,35 +236,11 @@ fsm_router.message(
     lambda message: message.content_type == ContentType.VIDEO
 )(handle_video)
 
-# Обработчик для фото в состоянии AWAITING_BROADCAST_MEDIA_CONFIRM
-fsm_router.message(
-    StateFilter(BotStates.AWAITING_BROADCAST_MEDIA_CONFIRM),
-    lambda message: message.content_type == ContentType.PHOTO and message.from_user.id in ADMIN_IDS
-)(handle_broadcast_media)
-
 # Обработчик для фото в состоянии AWAITING_CONFIRM_QUALITY
 fsm_router.message(
     StateFilter(BotStates.AWAITING_CONFIRM_QUALITY),
     lambda message: message.content_type == ContentType.PHOTO
 )(handle_photo)
-
-# Обработчик для текстовых сообщений в состоянии AWAITING_BROADCAST_MESSAGE
-fsm_router.message(
-    StateFilter(BotStates.AWAITING_BROADCAST_MESSAGE),
-    lambda message: message.content_type == ContentType.TEXT and message.from_user.id in ADMIN_IDS
-)(handle_broadcast_message)
-
-# Обработчик для текстовых сообщений в состоянии AWAITING_BROADCAST_SCHEDULE
-fsm_router.message(
-    StateFilter(BotStates.AWAITING_BROADCAST_SCHEDULE),
-    lambda message: message.content_type == ContentType.TEXT and message.from_user.id in ADMIN_IDS
-)(handle_broadcast_schedule_time)
-
-# Обработчик для текстовых сообщений в состоянии AWAITING_BROADCAST_BUTTON_INPUT
-fsm_router.message(
-    StateFilter(BotStates.AWAITING_BROADCAST_BUTTON_INPUT),
-    lambda message: message.content_type == ContentType.TEXT and message.from_user.id in ADMIN_IDS
-)(handle_broadcast_button_input)
 
 # Обработчик для текстовых сообщений в состоянии AWAITING_PAYMENT_DATES
 fsm_router.message(
@@ -334,9 +311,10 @@ fsm_router.message(
 )(handle_admin_text)
 
 # Обработчик для всех остальных фото (должен быть после специфичных обработчиков)
-fsm_router.message(
-    lambda message: message.content_type == ContentType.PHOTO
-)(handle_photo)
+# УДАЛЕНО: этот обработчик перехватывал все фото до того, как они могли достичь специфичных обработчиков
+# fsm_router.message(
+#     lambda message: message.content_type == ContentType.PHOTO
+# )(handle_photo)
 
 # Обработчик для всех остальных текстовых сообщений (должен быть последним)
 fsm_router.message(
@@ -430,10 +408,11 @@ fsm_router.callback_query(
 fsm_router.callback_query(
     lambda c: c.data == "generate_with_avatar"
 )(handle_generate_with_avatar_callback)
-fsm_router.callback_query(
-    StateFilter(TrainingStates.AWAITING_CONFIRMATION),
-    lambda c: c.data in ["confirm_start_training", "user_profile"]
-)(handle_confirm_training_callback)
+# УДАЛЕНО: обработка confirm_start_training теперь в training_router
+# fsm_router.callback_query(
+#     StateFilter(TrainingStates.AWAITING_CONFIRMATION),
+#     lambda c: c.data in ["confirm_start_training", "user_profile"]
+# )(handle_confirm_training_callback)
 
 def setup_conversation_handler(dp: Router) -> None:
     """Настройка роутера FSM."""

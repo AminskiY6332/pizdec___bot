@@ -17,7 +17,7 @@ from .messages import (
     handle_manual_prompt_input, handle_llama_prompt_input,
     handle_custom_prompt_photo_input, handle_admin_text,
     handle_admin_chat_message, handle_photo, handle_prompt_based_photo,
-    handle_photo_to_photo_reference, handle_photo_to_photo_mask
+    handle_photo_to_photo_reference, handle_photo_to_photo_mask, handle_video
 )
 from .callbacks import (
     handle_proceed_to_payment_callback, handle_user_callback, handle_back_to_menu_callback,
@@ -35,17 +35,16 @@ from .callbacks import (
     handle_select_new_male_avatar_styles_callback, handle_select_new_female_avatar_styles_callback,
     handle_confirm_start_training_callback, handle_back_to_avatar_name_input_callback, handle_use_suggested_trigger_callback,
     handle_confirm_photo_quality_callback, handle_repeat_last_generation_callback, handle_change_email_callback,
-    handle_confirm_change_email_callback, handle_skip_mask_callback, ask_for_aspect_ratio_callback, cancel
+    handle_confirm_change_email_callback, handle_skip_mask_callback, ask_for_aspect_ratio_callback, cancel,
+    user_callbacks_router
 )
-from .generation import (
-    generation_router, generate_photo_for_user, handle_admin_style_selection,
-    handle_admin_custom_prompt, handle_admin_aspect_ratio_selection,
-    handle_admin_generation_result, process_image_generation, start_admin_generation,
-    cancel as generation_cancel, generation_callback_handler, handle_admin_prompt_message
-)
+
 from .payments import (
     check_payment_status_and_update_message, handle_successful_payment_message,
     handle_expired_payment_message, schedule_payment_check
+)
+from .photo_transform import (
+    photo_transform_router, init_photo_generator
 )
 
 __all__ = [
@@ -63,7 +62,7 @@ __all__ = [
     'handle_manual_prompt_input', 'handle_llama_prompt_input',
     'handle_custom_prompt_photo_input', 'handle_admin_text',
     'handle_admin_chat_message', 'handle_photo', 'handle_prompt_based_photo',
-    'handle_photo_to_photo_reference', 'handle_photo_to_photo_mask',
+    'handle_photo_to_photo_reference', 'handle_photo_to_photo_mask', 'handle_video',
     
     # Callbacks
     'handle_proceed_to_payment_callback', 'handle_user_callback', 'handle_back_to_menu_callback',
@@ -82,16 +81,14 @@ __all__ = [
     'handle_confirm_start_training_callback', 'handle_back_to_avatar_name_input_callback', 'handle_use_suggested_trigger_callback',
     'handle_confirm_photo_quality_callback', 'handle_repeat_last_generation_callback', 'handle_change_email_callback',
     'handle_confirm_change_email_callback', 'handle_skip_mask_callback', 'ask_for_aspect_ratio_callback', 'cancel',
-    
-    # Generation
-    'generation_router', 'generate_photo_for_user', 'handle_admin_style_selection',
-    'handle_admin_custom_prompt', 'handle_admin_aspect_ratio_selection',
-    'handle_admin_generation_result', 'process_image_generation', 'start_admin_generation',
-    'generation_cancel', 'generation_callback_handler', 'handle_admin_prompt_message',
+    'user_callbacks_router',
+
     
     # Payments
     'check_payment_status_and_update_message', 'handle_successful_payment_message',
     'handle_expired_payment_message', 'schedule_payment_check',
     
-    # TODO: Добавить остальные user модули при переносе
+    # Photo Transform
+    'photo_transform_router', 'init_photo_generator',
+    
 ]

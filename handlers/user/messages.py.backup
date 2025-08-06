@@ -22,7 +22,7 @@ from database import is_user_blocked, block_user_access, check_database_user
 from keyboards import create_main_menu_keyboard, create_subscription_keyboard, create_user_profile_keyboard, create_back_keyboard, create_aspect_ratio_keyboard, create_photo_generate_menu_keyboard, create_admin_keyboard, create_broadcast_keyboard
 from generation.videos import create_video_photo_keyboard
 from llama_helper import generate_assisted_prompt
-from handlers.utils import safe_escape_markdown as escape_md, smart_message_send, smart_message_send_with_photo, send_message_with_fallback, create_payment_link
+from handlers.utils import safe_escape_markdown as escape_md, send_message_with_fallback, create_payment_link
 from states import BotStates, VideoStates
 from .photo_transform import PhotoTransformStates
 
@@ -625,7 +625,7 @@ async def handle_admin_text(message: Message, state: FSMContext) -> None:
             '📊 Общая статистика бота:',
             '📊 Общая статистика бота ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━:'
         )
-    except Exception as e:
+    except Exception:
         stats_text = '''🛠 Админ-панель:
 
 📊 Общая статистика бота ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━:

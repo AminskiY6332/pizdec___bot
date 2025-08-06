@@ -1,0 +1,26 @@
+2025-08-05 01:58:35 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-05 01:58:35 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-05 01:58:35 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-05 01:58:35 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-05 01:59:03 - generation - WARNING - === СБРОС КОНТЕКСТА ===
+2025-08-05 01:59:03 - generation - WARNING - Тип: user_profile
+2025-08-05 01:59:03 - generation - WARNING - User ID: 1290100715
+2025-08-05 01:59:03 - generation - WARNING - До очистки: user_data={}
+2025-08-05 01:59:03 - generation - WARNING - Стек вызовов:
+2025-08-05 01:59:03 - generation - WARNING - File "D:\vsProjects\pizdec___bot\venv\Lib\site-packages\aiogram\dispatcher\event\handler.py", line 43, in call
+    return await wrapped()
+2025-08-05 01:59:03 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 3011, in user_callback_handler
+    await handle_user_callback(query, state)
+2025-08-05 01:59:03 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 193, in handle_user_callback
+    await handle_user_profile_callback(query, state, user_id)
+2025-08-05 01:59:03 - generation - WARNING - File "D:\vsProjects\pizdec___bot\handlers\callbacks_user.py", line 1781, in handle_user_profile_callback
+    await reset_generation_context(state, "user_profile", user_id=user_id)
+2025-08-05 01:59:03 - generation - WARNING - File "D:\vsProjects\pizdec___bot\generation\utils.py", line 58, in reset_generation_context
+    stack = traceback.format_stack()
+2025-08-05 01:59:03 - generation - WARNING - === КОНЕЦ СТЕКА ===
+2025-08-05 01:59:03 - generation - INFO - Полная очистка контекста (тип: user_profile) для user_id=1290100715
+2025-08-05 01:59:03 - generation - INFO - После очистки: user_data={'user_id': 1290100715}
+2025-08-05 02:31:14 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-05 02:31:14 - generation - INFO - Нет незавершенных задач обучения для проверки.
+2025-08-05 02:31:14 - generation - INFO - Нет незавершенных задач видео для проверки.
+2025-08-05 02:31:14 - generation - INFO - Нет незавершенных задач видео для проверки.

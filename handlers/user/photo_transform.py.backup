@@ -1,0 +1,411 @@
+"""
+Модуль для обработки фото-трансформации
+"""
+
+import asyncio
+import uuid
+from typing import Optional
+
+from aiogram import Router, F
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import CallbackQuery, Message, BufferedInputFile
+from aiogram.enums import ParseMode
+
+from handlers.utils import escape_message_parts
+from database import check_database_user, update_user_credits
+from config import ADMIN_IDS
+
+# Глобальная переменная для хранения генератора
+photo_generator = None
+
+# Создаем роутер
+photo_transform_router = Router()
+
+class PhotoTransformStates(StatesGroup):
+    waiting_for_photo = State()
+    choosing_style = State()
+    choosing_aspect_ratio = State()
+    processing = State()
+
+def init_photo_generator(replicate_api_key: str):
+    """Инициализация генератора фото"""
+    global photo_generator
+    # Здесь должна быть инициализация генератора
+    # photo_generator = PhotoGenerator(replicate_api_key)
+    pass
+
+def get_progress_bar(percent: int) -> str:
+    """Создает визуальный прогресс-бар"""
+    filled = "█" * (percent // 10)
+    empty = "░" * (10 - percent // 10)
+    return f"{filled}{empty} {percent}%"
+
+async def update_progress(progress_message: Message, state: FSMContext, expected_duration: int = 67):
+    """Обновляет прогресс генерации"""
+    try:
+        for i in range(1, 101):
+            await asyncio.sleep(expected_duration / 100)
+            
+            progress_text = (
+                f"⏳ **Генерация в процессе...**\n\n"
+                f"{get_progress_bar(i)} – Обработка изображения..."
+            )
+            
+            await progress_message.edit_text(
+                escape_message_parts(progress_text, version=2),
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
+    except Exception as e:
+        print(f"Ошибка обновления прогресса: {e}")
+
+@photo_transform_router.callback_query(F.data == "photo_transform")
+async def start_photo_transform(callback: CallbackQuery, state: FSMContext):
+    """Начало процесса фото-трансформации"""
+    try:
+        await callback.answer()
+        user_id = callback.from_user.id
+        
+        # Проверяем баланс пользователя
+        user_info = await check_database_user(user_id)
+        if not user_info:
+            await callback.message.answer(
+                escape_message_parts("❌ Ошибка получения данных пользователя.", version=2),
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
+            return
+        
+        generations_left = user_info[0]
+        if generations_left <= 0:
+            await callback.message.answer(
+                escape_message_parts(
+                    "❌ У вас закончились печеньки!\n\n"
+                    "💎 Купите подписку, чтобы продолжить генерацию.",
+                    version=2
+                ),
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
+            return
+        
+        # Переходим к состоянию ожидания фото
+        await state.set_state(PhotoTransformStates.waiting_for_photo)
+        
+        # Отправляем инструкцию
+        instruction_text = (
+            f"📸 **Отправьте фото для трансформации**\n\n"
+            f"💰 У вас осталось печенек: `{generations_left}`\n\n"
+            f"📝 Просто отправьте фото, и я помогу вам его трансформировать!"
+        )
+        
+        await callback.message.answer(
+            escape_message_parts(instruction_text, version=2),
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
+        
+        logger.info(f"Пользователь user_id={user_id} начал процесс фото-трансформации")
+        
+    except Exception as e:
+        logger.error(f"Ошибка в start_photo_transform для user_id={user_id}: {e}", exc_info=True)
+        await callback.message.answer(
+            escape_message_parts("❌ Произошла ошибка. Попробуйте снова.", version=2),
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
+
+@photo_transform_router.message(PhotoTransformStates.waiting_for_photo, F.photo)
+async def handle_photo(message: Message, state: FSMContext):
+    """Обработка полученного фото"""
+    try:
+        user_id = message.from_user.id
+        
+        # Проверяем баланс еще раз
+        user_info = await check_database_user(user_id)
+        if not user_info:
+            await message.answer(
+                escape_message_parts("❌ Ошибка получения данных пользователя.", version=2),
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
+            return
+        
+        generations_left = user_info[0]
+        if generations_left <= 0:
+            await message.answer(
+                escape_message_parts(
+                    "❌ У вас закончились печеньки!\n\n"
+                    "💎 Купите подписку, чтобы продолжить генерацию.",
+                    version=2
+                ),
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
+            return
+        
+        # Сохраняем информацию о фото
+        photo_file_id = message.photo[-1].file_id
+        await state.update_data(photo_file_id=photo_file_id)
+        
+        # Переходим к выбору стиля
+        await state.set_state(PhotoTransformStates.choosing_style)
+        
+        # Создаем клавиатуру для выбора стиля
+        from keyboards import create_style_selection_keyboard
+        style_keyboard = create_style_selection_keyboard()
+        
+        style_text = (
+            f"🎨 **Выберите стиль трансформации**\n\n"
+            f"💰 Осталось печенек: `{generations_left}`\n\n"
+            f"Выберите стиль, в который хотите трансформировать ваше фото:"
+        )
+        
+        await message.answer(
+            escape_message_parts(style_text, version=2),
+            parse_mode=ParseMode.MARKDOWN_V2,
+            reply_markup=style_keyboard
+        )
+        
+        logger.info(f"Пользователь user_id={user_id} отправил фото для трансформации")
+        
+    except Exception as e:
+        logger.error(f"Ошибка в handle_photo для user_id={user_id}: {e}", exc_info=True)
+        await message.answer(
+            escape_message_parts("❌ Произошла ошибка. Попробуйте снова.", version=2),
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
+
+@photo_transform_router.message(PhotoTransformStates.waiting_for_photo)
+async def handle_wrong_content(message: Message):
+    """Обработка неправильного контента"""
+    await message.answer(
+        escape_message_parts("❌ Пожалуйста, отправьте фото.", version=2),
+        parse_mode=ParseMode.MARKDOWN_V2
+    )
+
+@photo_transform_router.callback_query(PhotoTransformStates.choosing_style, F.data.startswith("transform_style:"))
+async def handle_style_selection(callback: CallbackQuery, state: FSMContext):
+    """Обработка выбора стиля"""
+    try:
+        await callback.answer()
+        user_id = callback.from_user.id
+        
+        # Извлекаем выбранный стиль
+        selected_style = callback.data.split(":")[1]
+        
+        # Сохраняем выбранный стиль
+        await state.update_data(selected_style=selected_style)
+        
+        # Переходим к выбору соотношения сторон
+        await state.set_state(PhotoTransformStates.choosing_aspect_ratio)
+        
+        # Создаем клавиатуру для выбора соотношения сторон
+        from keyboards import create_aspect_ratio_keyboard
+        aspect_keyboard = create_aspect_ratio_keyboard()
+        
+        aspect_text = (
+            f"📐 **Выберите соотношение сторон**\n\n"
+            f"🎨 Выбранный стиль: `{selected_style}`\n\n"
+            f"Выберите соотношение сторон для вашего изображения:"
+        )
+        
+        await callback.message.edit_text(
+            escape_message_parts(aspect_text, version=2),
+            parse_mode=ParseMode.MARKDOWN_V2,
+            reply_markup=aspect_keyboard
+        )
+        
+        logger.info(f"Пользователь user_id={user_id} выбрал стиль: {selected_style}")
+        
+    except Exception as e:
+        logger.error(f"Ошибка в handle_style_selection для user_id={user_id}: {e}", exc_info=True)
+        await callback.message.answer(
+            escape_message_parts("❌ Произошла ошибка. Попробуйте снова.", version=2),
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
+
+@photo_transform_router.callback_query(PhotoTransformStates.choosing_aspect_ratio, F.data.startswith("transform_ratio:"))
+async def handle_aspect_ratio_selection(callback: CallbackQuery, state: FSMContext):
+    """Обработка выбора соотношения сторон"""
+    try:
+        await callback.answer()
+        user_id = callback.from_user.id
+        
+        # Извлекаем выбранное соотношение сторон
+        aspect_ratio = callback.data.split(":")[1]
+        
+        # Получаем данные из состояния
+        user_data = await state.get_data()
+        photo_file_id = user_data.get('photo_file_id')
+        selected_style = user_data.get('selected_style')
+        
+        if not photo_file_id or not selected_style:
+            await callback.message.answer(
+                escape_message_parts("❌ Ошибка: данные сессии утеряны.", version=2),
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
+            return
+        
+        # Проверяем баланс пользователя еще раз
+        user_info = await check_database_user(user_id)
+        if not user_info:
+            await callback.message.answer(
+                escape_message_parts("❌ Ошибка получения данных пользователя.", version=2),
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
+            return
+        
+        generations_left = user_info[0]
+        if generations_left <= 0:
+            await callback.message.answer(
+                escape_message_parts(
+                    "❌ У вас закончились печеньки!\n\n"
+                    "💎 Купите подписку, чтобы продолжить генерацию.",
+                    version=2
+                ),
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
+            return
+        
+        # Переходим к состоянию обработки
+        await state.set_state(PhotoTransformStates.processing)
+        
+        # Отправляем сообщение о начале обработки
+        progress_text = (
+            f"⏳ **Начинаем генерацию...**\n\n"
+            f"🎨 Стиль: `{selected_style}`\n"
+            f"📐 Соотношение: `{aspect_ratio}`\n\n"
+            f"{get_progress_bar(0)} – Подготовка к обработке..."
+        )
+        
+        progress_message = await callback.message.answer(
+            escape_message_parts(progress_text, version=2),
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
+        
+        # Запускаем обновление прогресса в фоне
+        progress_task = asyncio.create_task(
+            update_progress(progress_message, state)
+        )
+        
+        try:
+            # Скачиваем фото
+            photo_file = await callback.bot.get_file(photo_file_id)
+            photo_bytes = await callback.bot.download_file(photo_file.file_path)
+            
+            # Инициализируем генератор, если он не инициализирован
+            if photo_generator is None:
+                from config import REPLICATE_API_KEY
+                init_photo_generator(REPLICATE_API_KEY)
+            
+            # Запускаем генерацию
+            result = await photo_generator.generate(
+                image_bytes=photo_bytes,
+                style=selected_style,
+                aspect_ratio=aspect_ratio
+            )
+            
+            if result and result.get('success'):
+                # Генерация успешна
+                image_url = result.get('image_url')
+                
+                # Скачиваем результат
+                import aiohttp
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(image_url) as response:
+                        if response.status == 200:
+                            result_image_bytes = await response.read()
+                            
+                            # Создаем файл для отправки
+                            result_file = BufferedInputFile(
+                                result_image_bytes,
+                                filename=f"transformed_{user_id}_{uuid.uuid4().hex[:8]}.png"
+                            )
+                            
+                            # Отправляем результат
+                            success_text = (
+                                f"✅ **Генерация завершена!**\n\n"
+                                f"🎨 Стиль: `{selected_style}`\n"
+                                f"📐 Соотношение: `{aspect_ratio}`\n\n"
+                                f"💾 Сохраните изображение, нажав на него."
+                            )
+                            
+                            await callback.bot.send_photo(
+                                chat_id=user_id,
+                                photo=result_file,
+                                caption=escape_message_parts(success_text, version=2),
+                                parse_mode=ParseMode.MARKDOWN_V2
+                            )
+                            
+                            # Списываем печеньку
+                            await update_user_credits(user_id, -1, 'g')
+                            
+                            # Обновляем прогресс-сообщение
+                            final_progress_text = (
+                                f"✅ **Генерация завершена!**\n\n"
+                                f"🎨 Стиль: `{selected_style}`\n"
+                                f"📐 Соотношение: `{aspect_ratio}`\n\n"
+                                f"💰 Осталось печенек: `{generations_left - 1}`"
+                            )
+                            
+                            await progress_message.edit_text(
+                                escape_message_parts(final_progress_text, version=2),
+                                parse_mode=ParseMode.MARKDOWN_V2
+                            )
+                            
+                            logger.info(f"Успешная генерация фото-трансформации для user_id={user_id}")
+                            
+                        else:
+                            raise Exception(f"Ошибка скачивания результата: {response.status}")
+                    raise Exception("Не удалось получить URL результата")
+                    
+            else:
+                # Генерация не удалась
+                error_message = result.get('error', 'Неизвестная ошибка') if result else 'Ошибка генерации'
+                raise Exception(error_message)
+                
+        except Exception as e:
+            logger.error(f"Ошибка генерации фото-трансформации для user_id={user_id}: {e}", exc_info=True)
+            
+            # Отправляем сообщение об ошибке
+            error_text = (
+                f"❌ **Ошибка генерации**\n\n"
+                f"Произошла ошибка при обработке фото:\n"
+                f"`{str(e)}`\n\n"
+                f"Попробуйте:\n"
+                f"• Отправить другое фото\n"
+                f"• Выбрать другой стиль\n"
+                f"• Попробовать позже"
+            )
+            
+            await progress_message.edit_text(
+                escape_message_parts(error_text, version=2),
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
+            
+        finally:
+            # Отменяем задачу обновления прогресса
+            progress_task.cancel()
+            await state.clear()
+        
+    except Exception as e:
+        logger.error(f"Ошибка в handle_aspect_ratio_selection для user_id={user_id}: {e}", exc_info=True)
+        await callback.message.answer(
+            escape_message_parts("❌ Произошла ошибка. Попробуйте снова.", version=2),
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
+
+@photo_transform_router.callback_query(F.data == "transform_cancel")
+async def handle_cancel(callback: CallbackQuery, state: FSMContext):
+    """Отмена процесса трансформации"""
+    try:
+        await callback.answer()
+        user_id = callback.from_user.id
+        
+        # Очищаем состояние
+        await state.clear()
+        
+        await callback.message.answer(
+            escape_message_parts("❌ Процесс трансформации отменен.", version=2),
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
+        
+        logger.info(f"Пользователь user_id={user_id} отменил процесс фото-трансформации")
+        
+    except Exception as e:
+        logger.error(f"Ошибка в handle_cancel для user_id={user_id}: {e}", exc_info=True) 

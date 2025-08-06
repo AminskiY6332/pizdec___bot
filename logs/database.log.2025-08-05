@@ -1,0 +1,11 @@
+2025-08-05 01:58:31 - database - INFO - Столбец total_reward_photos уже существует, миграция не требуется
+2025-08-05 01:58:31 - database - INFO - Индексы для referral_stats созданы или подтверждены
+2025-08-05 01:58:31 - database - INFO - База данных успешно инициализирована с индексами, триггерами и миграцией referrals
+2025-08-05 01:58:31 - database - INFO - Периодическое резервное копирование запущено
+2025-08-05 01:58:35 - database - INFO - Backup integrity check: backups\users_backup_20250805_015835.db - OK, tables: 17
+2025-08-05 01:59:00 - database - INFO - Получено 0 запланированных рассылок
+2025-08-05 02:31:09 - database - INFO - Столбец total_reward_photos уже существует, миграция не требуется
+2025-08-05 02:31:09 - database - INFO - Индексы для referral_stats созданы или подтверждены
+2025-08-05 02:31:09 - database - INFO - База данных успешно инициализирована с индексами, триггерами и миграцией referrals
+2025-08-05 02:31:10 - database - INFO - Периодическое резервное копирование запущено
+2025-08-05 02:31:14 - database - INFO - Backup integrity check: backups\users_backup_20250805_023114.db - OK, tables: 17

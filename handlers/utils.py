@@ -19,6 +19,9 @@ from config import TARIFFS, YOOKASSA_SHOP_ID, SECRET_KEY, YOOKASSA_TEST_TOKEN, A
 from logger import get_logger
 logger = get_logger('main')
 
+import aiosqlite
+from config import DATABASE_PATH
+
 # Проверка наличия YooKassa
 try:
     from yookassa import Configuration as YooKassaConfiguration, Payment as YooKassaPayment
@@ -907,3 +910,336 @@ def anti_spam(timeout: float = 2.0, except_states: tuple = ("avatar_training",))
             return await func(*args, **kwargs)
         return wrapper
     return decorator
+
+
+async def get_bot_summary_stats() -> str:
+    """Получает общую статистику бота для отображения"""
+    try:
+        async with aiosqlite.connect(DATABASE_PATH) as conn:
+            conn.row_factory = aiosqlite.Row
+            c = await conn.cursor()
+
+            # Общее количество пользователей
+            await c.execute("SELECT COUNT(*) as total FROM users")
+            total_users = (await c.fetchone())['total']
+
+            # Количество оплативших пользователей
+            await c.execute("""
+                SELECT COUNT(DISTINCT user_id) as paid_users
+                FROM payments
+                WHERE status = 'succeeded'
+            """)
+            paid_users = (await c.fetchone())['paid_users']
+
+            # Общее количество платежей
+            await c.execute("""
+                SELECT COUNT(*) as total_payments, COALESCE(SUM(amount), 0) as total_amount
+                FROM payments
+                WHERE status = 'succeeded'
+            """)
+            payment_stats = await c.fetchone()
+            total_payments = payment_stats['total_payments']
+            total_amount = payment_stats['total_amount']
+
+            # Количество созданных аватаров
+            await c.execute("""
+                SELECT 
+                    COUNT(*) as total_avatars,
+                    COUNT(CASE WHEN status = 'success' THEN 1 END) as successful_avatars
+                FROM user_trainedmodels
+            """)
+            avatar_stats = await c.fetchone()
+            total_avatars = avatar_stats['total_avatars']
+            successful_avatars = avatar_stats['successful_avatars']
+
+            # Количество генераций за последние 30 дней
+            await c.execute("""
+                SELECT COUNT(*) as recent_generations
+                FROM generation_log 
+                WHERE created_at >= date('now', '-30 days')
+            """)
+            recent_generations = (await c.fetchone())['recent_generations']
+            
+            # Статистика за сегодня
+            await c.execute("""
+                SELECT COUNT(*) as new_users_today
+                FROM users 
+                WHERE date(created_at) = date('now')
+            """)
+            new_users_today = (await c.fetchone())['new_users_today']
+            
+            await c.execute("""
+                SELECT COUNT(*) as payments_today
+                FROM payments 
+                WHERE status = 'succeeded' AND date(created_at) = date('now')
+            """)
+            payments_today = (await c.fetchone())['payments_today']
+            
+            await c.execute("""
+                SELECT COUNT(DISTINCT user_id) as subscriptions_today
+                FROM payments 
+                WHERE status = 'succeeded' AND date(created_at) = date('now')
+            """)
+            subscriptions_today = (await c.fetchone())['subscriptions_today']
+            
+            # Процент оплативших
+            paid_percentage = (paid_users / total_users * 100) if total_users > 0 else 0
+            
+            # Формируем простой текст без форматирования
+            summary = f"""🛠 Админ-панель:
+
+📊 Общая статистика бота:
+👥 Всего пользователей: {total_users}
+💰 Оплатили: {paid_users} ({paid_percentage:.1f}%)
+💳 Всего платежей: {total_payments} на {total_amount:.0f}₽
+
+🎭 Аватары:
+🖼 Всего создано: {total_avatars}
+✅ Успешных: {successful_avatars}
+
+📈 Активность:
+🔥 Генераций за 30 дней: {recent_generations}
+
+📅 За сегодня:
+🆕 Новых пользователей: {new_users_today}
+💳 Оплат: {payments_today}
+📝 Подписок: {subscriptions_today}
+
+Выберите действие:"""
+
+            return summary
+
+    except Exception as e:
+        logger.error(f"Ошибка получения статистики бота: {e}", exc_info=True)
+        return f"""🛠 Админ-панель:
+
+❌ Ошибка загрузки статистики
+
+Выберите действие:"""
+
+
+async def smart_message_send(
+    query_or_message,
+    text: str,
+    reply_markup: Optional[InlineKeyboardMarkup] = None,
+    parse_mode: Optional[ParseMode] = None,
+    **kwargs
+) -> Message:
+    """
+    Умная отправка сообщения - редактирует существующее или отправляет новое.
+    
+    Args:
+        query_or_message: CallbackQuery или Message объект
+        text: Текст сообщения
+        reply_markup: Клавиатура
+        parse_mode: Режим парсинга
+        **kwargs: Дополнительные параметры
+    
+    Returns:
+        Message объект
+    """
+    try:
+        # Определяем тип объекта и получаем message
+        if isinstance(query_or_message, CallbackQuery):
+            message = query_or_message.message
+            query = query_or_message
+        else:
+            message = query_or_message
+            query = None
+        
+        # Попытка отредактировать существующее сообщение
+        if message and hasattr(message, 'edit_text'):
+            try:
+                edited_message = await message.edit_text(
+                    text=text,
+                    reply_markup=reply_markup,
+                    parse_mode=parse_mode,
+                    **kwargs
+                )
+                if query:
+                    await query.answer()
+                return edited_message
+            except TelegramBadRequest as e:
+                # Если редактирование не удалось, отправляем новое сообщение
+                logger.debug(f"Не удалось отредактировать сообщение: {e}")
+                
+        # Отправка нового сообщения
+        if query:
+            new_message = await query.message.answer(
+                text=text,
+                reply_markup=reply_markup,
+                parse_mode=parse_mode,
+                **kwargs
+            )
+            await query.answer()
+        else:
+            new_message = await message.answer(
+                text=text,
+                reply_markup=reply_markup,
+                parse_mode=parse_mode,
+                **kwargs
+            )
+        
+        return new_message
+        
+    except Exception as e:
+        logger.error(f"Ошибка в smart_message_send: {e}", exc_info=True)
+        # В крайнем случае пытаемся отправить простое сообщение
+        if query:
+            return await query.message.answer("❌ Произошла ошибка при отправке сообщения")
+        else:
+            return await message.answer("❌ Произошла ошибка при отправке сообщения")
+
+
+async def delete_message_and_send_new(
+    query_or_message,
+    text: str,
+    reply_markup: Optional[InlineKeyboardMarkup] = None,
+    parse_mode: Optional[ParseMode] = None,
+    **kwargs
+) -> Message:
+    """
+    Удаляет предыдущее сообщение и отправляет новое.
+    Используется для действий, требующих отдельного сообщения (создание аватара, смена email и т.д.)
+    
+    Args:
+        query_or_message: CallbackQuery или Message объект
+        text: Текст нового сообщения
+        reply_markup: Клавиатура
+        parse_mode: Режим парсинга
+        **kwargs: Дополнительные параметры
+    
+    Returns:
+        Message объект нового сообщения
+    """
+    try:
+        # Определяем тип объекта и получаем message
+        if isinstance(query_or_message, CallbackQuery):
+            message = query_or_message.message
+            query = query_or_message
+        else:
+            message = query_or_message
+            query = None
+        
+        # Пытаемся удалить предыдущее сообщение
+        if message:
+            try:
+                await message.delete()
+                logger.debug("Предыдущее сообщение успешно удалено")
+            except Exception as e:
+                logger.debug(f"Не удалось удалить предыдущее сообщение: {e}")
+        
+        # Отправляем новое сообщение
+        if query:
+            new_message = await query.message.answer(
+                text=text,
+                reply_markup=reply_markup,
+                parse_mode=parse_mode,
+                **kwargs
+            )
+            await query.answer()
+        else:
+            new_message = await message.answer(
+                text=text,
+                reply_markup=reply_markup,
+                parse_mode=parse_mode,
+                **kwargs
+            )
+        
+        return new_message
+        
+    except Exception as e:
+        logger.error(f"Ошибка в delete_message_and_send_new: {e}", exc_info=True)
+        # В крайнем случае пытаемся отправить простое сообщение
+        if query:
+            return await query.message.answer("❌ Произошла ошибка при отправке сообщения")
+        else:
+            return await message.answer("❌ Произошла ошибка при отправке сообщения")
+
+
+async def smart_message_send_with_photo(
+    query_or_message,
+    photo,
+    caption: str = None,
+    reply_markup: Optional[InlineKeyboardMarkup] = None,
+    parse_mode: Optional[ParseMode] = None,
+    **kwargs
+) -> Message:
+    """
+    Умная отправка сообщения с фото - пытается отредактировать или отправляет новое.
+    
+    Args:
+        query_or_message: CallbackQuery или Message объект
+        photo: Фото для отправки
+        caption: Подпись к фото
+        reply_markup: Клавиатура
+        parse_mode: Режим парсинга
+        **kwargs: Дополнительные параметры
+    
+    Returns:
+        Message объект
+    """
+    try:
+        # Определяем тип объекта и получаем message
+        if isinstance(query_or_message, CallbackQuery):
+            message = query_or_message.message
+            query = query_or_message
+        else:
+            message = query_or_message
+            query = None
+        
+        # Попытка отредактировать медиа в существующем сообщении
+        if message and hasattr(message, 'edit_media') and message.photo:
+            try:
+                from aiogram.types import InputMediaPhoto
+                media = InputMediaPhoto(media=photo, caption=caption, parse_mode=parse_mode)
+                await message.edit_media(media=media, reply_markup=reply_markup, **kwargs)
+                if query:
+                    await query.answer()
+                return message
+            except TelegramBadRequest as e:
+                logger.debug(f"Не удалось отредактировать медиа: {e}")
+        
+        # Попытка отредактировать подпись если фото то же самое
+        elif message and hasattr(message, 'edit_caption') and message.photo:
+            try:
+                await message.edit_caption(
+                    caption=caption,
+                    reply_markup=reply_markup,
+                    parse_mode=parse_mode,
+                    **kwargs
+                )
+                if query:
+                    await query.answer()
+                return message
+            except TelegramBadRequest as e:
+                logger.debug(f"Не удалось отредактировать подпись: {e}")
+        
+        # Отправка нового сообщения с фото
+        if query:
+            new_message = await query.message.answer_photo(
+                photo=photo,
+                caption=caption,
+                reply_markup=reply_markup,
+                parse_mode=parse_mode,
+                **kwargs
+            )
+            await query.answer()
+        else:
+            new_message = await message.answer_photo(
+                photo=photo,
+                caption=caption,
+                reply_markup=reply_markup,
+                parse_mode=parse_mode,
+                **kwargs
+            )
+        
+        return new_message
+        
+    except Exception as e:
+        logger.error(f"Ошибка в smart_message_send_with_photo: {e}", exc_info=True)
+        # В крайнем случае пытаемся отправить простое сообщение
+        if query:
+            return await query.message.answer("❌ Произошла ошибка при отправке фото")
+        else:
+            return await message.answer("❌ Произошла ошибка при отправке фото")

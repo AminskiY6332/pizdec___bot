@@ -24,7 +24,7 @@ from database import check_database_user, update_user_credits, save_user_trained
 from keyboards import create_main_menu_keyboard, create_training_keyboard, create_user_profile_keyboard, create_subscription_keyboard, create_confirmation_keyboard
 from generation.utils import TempFileManager, reset_generation_context, send_message_with_fallback
 from generation.images import upload_image_to_replicate
-from handlers.utils import clean_admin_context, safe_escape_markdown as escape_md
+from handlers.utils import clean_admin_context, safe_escape_markdown as escape_md, escape_message_parts
 from utils import get_cookie_progress_bar
 
 from logger import get_logger
@@ -617,8 +617,17 @@ async def initiate_training(query: CallbackQuery, state: FSMContext):
     user_id = query.from_user.id
     bot = query.bot
 
+    # Получаем количество загруженных фото
+    user_data = await state.get_data()
+    photo_count = len(user_data.get('training_photos', []))
+    
+    text = escape_message_parts(
+        f"🏷 Придумай имя для своего аватара (например: \"Мой стиль\", \"Бизнес-образ\").",
+        f"📸 У тебя загружено {photo_count} фото.",
+        version=2
+    )
     await query.message.edit_text(
-        escape_md("📝 Введите имя для вашего нового аватара:", version=2),
+        text,
         parse_mode=ParseMode.MARKDOWN_V2
     )
     await state.set_state(TrainingStates.AWAITING_AVATAR_NAME)
@@ -626,9 +635,16 @@ async def initiate_training(query: CallbackQuery, state: FSMContext):
 @training_router.message(TrainingStates.AWAITING_AVATAR_NAME)
 async def handle_avatar_name(message: Message, state: FSMContext):
     """Обрабатывает ввод имени аватара."""
+
+    
     user_id = message.from_user.id
     bot = message.bot
     avatar_name = message.text.strip()
+    current_state = await state.get_state()
+    
+    logger.error(f"🚀 handle_avatar_name ВЫЗВАН: user_id={user_id}, avatar_name='{avatar_name}', current_state={current_state}")
+    logger.info(f"handle_avatar_name вызван: user_id={user_id}, avatar_name='{avatar_name}', current_state={current_state}")
+    logger.error(f"🔍 handle_avatar_name: ОТЛАДКА - будет ли показана кнопка?")
 
     if not avatar_name or len(avatar_name) > 50:
         await message.reply(
@@ -641,12 +657,15 @@ async def handle_avatar_name(message: Message, state: FSMContext):
     user_data = await state.get_data()
     training_photos = user_data.get('training_photos', [])
     photo_count = len(training_photos)
+    
+    logger.info(f"handle_avatar_name: user_data_keys={list(user_data.keys())}, photo_count={photo_count}, training_photos={training_photos}")
 
     # Сохраняем имя аватара
     await state.update_data(avatar_name=avatar_name, training_photos=training_photos, processed_media_groups=set())
 
     if photo_count >= 10:
         # Если загружено достаточно фотографий, переходим к подтверждению
+        logger.info(f"handle_avatar_name: достаточно фотографий ({photo_count}), показываем подтверждение")
         text = (
             escape_md(f"👍 Отлично! Давай проверим финальные данные:\n\n", version=2) +
             escape_md(f"👤 Имя аватара: {avatar_name}\n", version=2) +
@@ -667,8 +686,10 @@ async def handle_avatar_name(message: Message, state: FSMContext):
             parse_mode=ParseMode.MARKDOWN_V2
         )
         await state.set_state(TrainingStates.AWAITING_CONFIRMATION)
+        logger.error(f"🎯 handle_avatar_name: Состояние AWAITING_CONFIRMATION установлено, кнопка 'confirm_start_training' создана!")
     else:
         # Если фотографий недостаточно, запрашиваем загрузку
+        logger.info(f"handle_avatar_name: недостаточно фотографий ({photo_count}), просим загрузить ещё")
         text = (
             escape_md(f"✅ Имя аватара: {avatar_name}\n\n", version=2) +
             escape_md(f"📸 Загружено {photo_count} фото. Нужно минимум 10. Загрузи ещё {10 - photo_count}.", version=2) + "\n" +
@@ -695,13 +716,40 @@ async def handle_confirmation(message: Message, state: FSMContext):
         parse_mode=ParseMode.MARKDOWN_V2
     )
 
-@training_router.callback_query(TrainingStates.AWAITING_CONFIRMATION, lambda c: c.data == "confirm_start_training")
+@training_router.callback_query(TrainingStates.AWAITING_PHOTOS, lambda c: c.data == "confirm_start_training")
 async def handle_confirm_training_callback(query: CallbackQuery, state: FSMContext):
     """Обрабатывает подтверждение начала обучения."""
     user_id = query.from_user.id
-    await query.answer("Запускаем обучение!")
+    current_state = await state.get_state()
+    user_data = await state.get_data()
+    logger.info(f"handle_confirm_training_callback вызван: user_id={user_id}, current_state={current_state}, user_data_keys={list(user_data.keys())}")
+    await query.answer("Отлично! Теперь введите имя аватара")
+    
+    # Запрашиваем имя аватара перед началом обучения
+    logger.info(f"handle_confirm_training_callback: отправляем сообщение и меняем состояние на AWAITING_AVATAR_NAME")
+    
+    # Получаем количество загруженных фото
+    user_data = await state.get_data()
+    photo_count = len(user_data.get('training_photos', []))
+    
+    text = escape_message_parts(
+        f"🏷 Придумай имя для своего аватара (например: \"Мой стиль\", \"Бизнес-образ\").",
+        f"📸 У тебя загружено {photo_count} фото.",
+        version=2
+    )
+    await query.message.edit_text(
+        text,
+        parse_mode=ParseMode.MARKDOWN_V2
+    )
+    await state.set_state(TrainingStates.AWAITING_AVATAR_NAME)
+    logger.info(f"handle_confirm_training_callback: состояние установлено в AWAITING_AVATAR_NAME")
+
+@training_router.callback_query(TrainingStates.AWAITING_CONFIRMATION, lambda c: c.data == "confirm_start_training")
+async def handle_confirm_start_training_callback_state(query: CallbackQuery, state: FSMContext):
+    """Обрабатывает подтверждение начала обучения в состоянии AWAITING_CONFIRMATION."""
+    logger.error(f"🎯 TRAINING_ROUTER: handle_confirm_start_training_callback_state вызван для user_id={query.from_user.id}")
+    logger.error(f"🎯 TRAINING_ROUTER: callback_data={query.data}, current_state={await state.get_state()}")
     await start_training(query.message, state)
-    await state.clear()
 
 @training_router.callback_query(TrainingStates.AWAITING_CONFIRMATION, lambda c: c.data == "user_profile")
 async def handle_cancel_training_callback(query: CallbackQuery, state: FSMContext):
@@ -722,9 +770,14 @@ async def handle_training_photos(message: Message, state: FSMContext):
     bot = message.bot
     media_group_id = message.media_group_id
 
+    # Добавляем отладочную информацию
+    logger.info(f'handle_training_photos вызван для user_id={user_id}, media_group_id={media_group_id}')
+    
     user_data = await state.get_data()
     training_photos = user_data.get('training_photos', [])
     processed_media_groups = user_data.get('processed_media_groups', set())
+
+    logger.info(f'handle_training_photos: user_data={user_data}, training_photos={training_photos}')
 
     # Пропускаем, если медиагруппа уже обработана
     if media_group_id and media_group_id in processed_media_groups:
@@ -743,18 +796,21 @@ async def handle_training_photos(message: Message, state: FSMContext):
 
     # Используем фото с наивысшим разрешением
     photo = photos[-1]  # Последний элемент имеет максимальное разрешение
+    logger.info(f"Обрабатываю фото: file_id={photo.file_id} для user_id={user_id}")
     try:
         file = await bot.get_file(photo.file_id)
         photo_path = f"temp/{user_id}_{uuid.uuid4()}.jpg"
+        logger.info(f"Создаю путь к файлу: {photo_path}")
         os.makedirs(os.path.dirname(photo_path), exist_ok=True)
         await bot.download_file(file.file_path, photo_path)
+        logger.info(f"Файл скачан: {photo_path}, размер: {os.path.getsize(photo_path) if os.path.exists(photo_path) else 'файл не найден'}")
         if photo_path not in training_photos:
             training_photos.append(photo_path)
-            logger.debug(f"Добавлено фото {photo_path} для user_id={user_id}")
+            logger.info(f"Добавлено фото {photo_path} для user_id={user_id}, всего фото: {len(training_photos)}")
         else:
             logger.debug(f"Фото {photo_path} уже было добавлено для user_id={user_id}")
     except Exception as e:
-        logger.error(f"Ошибка обработки фото для user_id={user_id}: {e}")
+        logger.error(f"Ошибка обработки фото для user_id={user_id}: {e}", exc_info=True)
         await message.reply(
             escape_md("❌ Ошибка при обработке фото. Попробуй загрузить другое.", version=2),
             parse_mode=ParseMode.MARKDOWN_V2
@@ -769,6 +825,7 @@ async def handle_training_photos(message: Message, state: FSMContext):
     await state.update_data(training_photos=training_photos)
     count = len(training_photos)
 
+    logger.info(f"handle_training_photos завершен: user_id={user_id}, media_group_id={media_group_id}, count={count}, training_photos={training_photos}")
     logger.debug(f"Загружено {count} фото для user_id={user_id}, media_group_id={media_group_id}")
 
     if count >= 10:
@@ -776,6 +833,7 @@ async def handle_training_photos(message: Message, state: FSMContext):
             escape_md(f"📸 Загружено {count} фото. Можно начать обучение или загрузить ещё.", version=2) + "\n" +
             escape_md("Для запуска обучения нажми 'Начать обучение'.", version=2)
         )
+        # Состояние остается AWAITING_PHOTOS, переход в AWAITING_CONFIRMATION произойдет после ввода имени
         await message.reply(
             text,
             reply_markup=await create_training_keyboard(user_id, count),

@@ -41,7 +41,7 @@ from handlers.admin.visualization import (
 # Импорт generate_photo_for_user перенесен в handlers/admin/generation.py
 from handlers.utils import (
     escape_message_parts, anti_spam
-, smart_message_send, smart_message_send_with_photo)
+)
 from keyboards import create_admin_keyboard
 from report import report_generator, send_report_to_admin, delete_report_file
 

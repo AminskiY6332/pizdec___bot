@@ -33,38 +33,36 @@ from database import (
     start_periodic_tasks, backup_database
 )
 from handlers.user.commands import start, menu, help_command, check_training
-from handlers.commands import debug_avatars, addcook, delcook, addnew, delnew, user_id_info
-from handlers.messages import (
-    handle_photo, handle_admin_text, handle_video,
-    award_referral_bonuses, handle_text
+from handlers.admin.commands import debug_avatars, addcook, delcook, addnew, delnew, user_id_info
+from handlers.user.messages import (
+    handle_photo, handle_admin_text, handle_video, handle_text
 )
 from handlers.system.errors import error_handler
-from handlers.admin_panel import send_daily_payments_report
-from handlers.visualization import handle_activity_dates_input
-from handlers.user_management import (
+from handlers.admin.panels import send_daily_payments_report
+from handlers.admin.visualization import handle_activity_dates_input
+from handlers.admin.user_management import (
     handle_balance_change_input, handle_block_reason_input, user_management_callback_handler, handle_user_search_input
 )
-from handlers.broadcast import (
-    handle_broadcast_message, handle_broadcast_schedule_input, list_scheduled_broadcasts,
+from handlers.admin.broadcast import (
     broadcast_message_admin, broadcast_to_paid_users, broadcast_to_non_paid_users,
-    broadcast_with_payment, handle_broadcast_schedule_time, handle_broadcast_button_input
+    broadcast_with_payment
 )
-from handlers.payments import handle_payments_date_input
-from handlers.callbacks_admin import (
-    admin_callback_handler, handle_admin_style_selection,
-    handle_admin_custom_prompt, handle_admin_send_generation, handle_admin_regenerate, admin_callbacks_router
+from handlers.admin.payments import handle_payments_date_input
+from handlers.admin.callbacks import (
+    admin_callbacks_router, handle_admin_send_generation, handle_admin_regenerate
 )
-from handlers.callbacks_user import handle_user_callback, user_callbacks_router
+from handlers.admin.panels import admin_panels_router
+from handlers.user.callbacks import handle_user_callback, user_callbacks_router
 from handlers.system.utils import utils_callback_handler, utils_callbacks_router
 from handlers.system.referrals import referrals_callback_handler, referrals_callbacks_router
 from generation import check_pending_trainings, check_pending_video_tasks
 from keyboards import create_main_menu_keyboard
 from fsm_handlers import setup_conversation_handler, fsm_router, BotStates
-from handlers.user_management import user_management_router, cancel
-from handlers.payments import payments_router
-from handlers.visualization import visualization_router
-from handlers.broadcast import broadcast_router
-from handlers.photo_transform import photo_transform_router, init_photo_generator
+from handlers.admin.user_management import user_management_router, cancel
+from handlers.admin.payments import payments_router
+from handlers.admin.visualization import visualization_router
+from handlers.admin.broadcast import broadcast_router
+from handlers.user.photo_transform import photo_transform_router, init_photo_generator
 # УДАЛЕНО: from bot_counter import bot_counter_router
 from generation.videos import video_router
 from generation.training import training_router
@@ -940,6 +938,8 @@ async def main():
                     (await state.get_state()) == self.state_key
                 )
 
+
+
         # Регистрация FSM-роутера
         setup_onboarding_handlers()
         setup_conversation_handler(dp)
@@ -947,8 +947,20 @@ async def main():
         dp.include_router(photo_transform_router)
 
         # Регистрация дополнительных роутеров
+
+
         dp.include_router(broadcast_router)
         dp.include_router(admin_callbacks_router)
+        # Добавляем очень широкий обработчик фото для отладки ПЕРЕД всеми роутерами
+        async def debug_photo_handler(message: Message, state: FSMContext):
+            logger.info(f'DEBUG_PHOTO_HANDLER: Получено фото от user_id={message.from_user.id}, chat_id={message.chat.id}')
+            logger.info(f'DEBUG_PHOTO_HANDLER: message.photo={message.photo}, message.media_group_id={message.media_group_id}')
+            # Вызываем оригинальный обработчик
+            await handle_photo(message, state)
+        
+        dp.message.register(debug_photo_handler, lambda message: message.content_type == ContentType.PHOTO)
+        
+        dp.include_router(admin_panels_router)
         dp.include_router(onboarding_router)
         dp.include_router(user_callbacks_router)
         dp.include_router(referrals_callbacks_router)
@@ -968,7 +980,7 @@ async def main():
         dp.message.register(help_command, Command("help"))
         dp.message.register(check_training, Command("check_training"))
         dp.message.register(debug_avatars, Command("debug_avatars"))
-        dp.message.register(list_scheduled_broadcasts, Command("manage_broadcasts"))
+        # dp.message.register(list_scheduled_broadcasts, Command("manage_broadcasts"))
         dp.message.register(addcook, Command("addcook"))
         dp.message.register(delcook, Command("delcook"))
         dp.message.register(addnew, Command("addnew"))
@@ -977,22 +989,22 @@ async def main():
         # УДАЛЕНО: команда /botname больше не используется
 
         # Импортируем и регистрируем команду для разработчика
-        from handlers.commands import dev_test_tariff
-        dp.message.register(dev_test_tariff, Command("dev_test"))
+        # from handlers.commands import dev_test_tariff
+        # dp.message.register(dev_test_tariff, Command("dev_test"))
 
         # Специфичные обработчики для текстовых сообщений
         dp.message.register(
-            handle_broadcast_message,
+            # handle_broadcast_message,
             AdminStateFilter(BotStates.AWAITING_BROADCAST_MESSAGE)
         )
-        dp.message.register(
-            handle_broadcast_schedule_time,
-            AdminStateFilter(BotStates.AWAITING_BROADCAST_SCHEDULE)
-        )
-        dp.message.register(
-            handle_broadcast_button_input,
-            AdminStateFilter(BotStates.AWAITING_BROADCAST_BUTTON_INPUT)
-        )
+        # dp.message.register(
+        #     handle_broadcast_schedule_time,
+        #     AdminStateFilter(BotStates.AWAITING_BROADCAST_SCHEDULE)
+        # )
+        # dp.message.register(
+        #     handle_broadcast_button_input,
+        #     AdminStateFilter(BotStates.AWAITING_BROADCAST_BUTTON_INPUT)
+        # )
         dp.message.register(
             handle_payments_date_input,
             AdminStateFilter(BotStates.AWAITING_PAYMENT_DATES)
@@ -1014,14 +1026,13 @@ async def main():
             AdminStateFilter(BotStates.AWAITING_USER_SEARCH)
         )
         dp.message.register(
-            handle_admin_custom_prompt,
+            # handle_admin_custom_prompt,
             AdminStateFilter(BotStates.AWAITING_ADMIN_PROMPT)
         )
 
         # Обработчики для фото и видео
-        dp.message.register(handle_photo, lambda message: message.content_type == ContentType.PHOTO)
         dp.message.register(handle_video, lambda message: message.content_type == ContentType.VIDEO)
-
+        
         # Общий обработчик текста (должен быть последним)
         dp.message.register(handle_text, lambda message: message.content_type == ContentType.TEXT)
 
@@ -1170,9 +1181,7 @@ async def main():
         webhook_runner = aiohttp.web.AppRunner(webhook_app)
         await webhook_runner.setup()
         webhook_site = aiohttp.web.TCPSite(webhook_runner, 'localhost', 8000)
-        await webhook_site.start()
-        logger.info("✅ Интегрированный webhook сервер запущен на порту 8000")
-
+        
         # Запуск проверки задач при старте
         logger.info("Запуск проверки задач при старте...")
         asyncio.create_task(run_checks(bot_instance))
@@ -1186,13 +1195,6 @@ async def main():
         # Создаем начальный бэкап при запуске (безопасно)
         logger.info("Создание стартового бэкапа...")
         asyncio.create_task(backup_database())
-
-        # ✅ Интегрированный aiohttp webhook запущен на порту 8000
-        logger.info("✅ Система запущена с интегрированным webhook (максимальная производительность)")
-
-        # Запуск бота в режиме polling
-        logger.info("Запуск бота в режиме polling...")
-        bot_event_loop = asyncio.get_running_loop()
 
         # Устанавливаем статус в Redis
         try:
@@ -1208,7 +1210,11 @@ async def main():
 
         # УДАЛЕНО: автоматическое обновление имени бота отключено
         await notify_startup()
+        
+        # Для локального тестирования используем polling
+        logger.info("✅ Система запущена в режиме polling (локальное тестирование)")
         await dp.start_polling(bot_instance, allowed_updates=["message", "callback_query"], drop_pending_updates=True)
+        
         logger.info("✅ Бот успешно запущен и работает!")
 
     except (KeyboardInterrupt, SystemExit):

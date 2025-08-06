@@ -14,7 +14,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 import aiosqlite
 from config import DATABASE_PATH, TARIFFS, ADMIN_IDS, ERROR_LOG_ADMIN
-from handlers.utils import safe_escape_markdown as escape_md, get_tariff_text
+from handlers.utils import safe_escape_markdown as escape_md, smart_message_send, smart_message_send_with_photo, get_tariff_text
 from database import check_database_user, get_user_payments, is_old_user, mark_welcome_message_sent, get_users_for_reminders, is_user_blocked, block_user_access
 from keyboards import create_subscription_keyboard, create_main_menu_keyboard
 from onboarding_config import get_day_config, get_message_text, has_user_purchases
@@ -365,8 +365,9 @@ async def proceed_to_tariff_callback(callback_query: CallbackQuery, state: FSMCo
     user_id = callback_query.from_user.id
     subscription_data = await check_database_user(user_id)
     if not subscription_data or len(subscription_data) < 14:
-        await callback_query.message.answer(
-            escape_md("❌ Ошибка сервера! Попробуйте позже.", version=2),
+        await smart_message_send(
+            callback_query,
+            text=escape_md("❌ Ошибка сервера! Попробуйте позже.", version=2),
             parse_mode=ParseMode.MARKDOWN_V2
         )
         await callback_query.answer()
@@ -380,8 +381,9 @@ async def proceed_to_tariff_callback(callback_query: CallbackQuery, state: FSMCo
         # Для оплативших пользователей показываем все тарифы
         tariff_message_text = get_tariff_text(first_purchase=first_purchase, is_paying_user=True)
         subscription_kb = await create_subscription_keyboard(hide_mini_tariff=False)
-        await callback_query.message.answer(
-            tariff_message_text,
+        await smart_message_send(
+            callback_query,
+            text=tariff_message_text,
             reply_markup=subscription_kb,
             parse_mode=ParseMode.MARKDOWN_V2
         )
@@ -400,8 +402,9 @@ async def proceed_to_tariff_callback(callback_query: CallbackQuery, state: FSMCo
                 [InlineKeyboardButton(text="🔙 Главное меню", callback_data="back_to_menu")]
             ])
 
-            await callback_query.message.answer(
-                escape_md(message_text, version=2),
+            await smart_message_send(
+                callback_query,
+                text=escape_md(message_text, version=2),
                 reply_markup=keyboard,
                 parse_mode=ParseMode.MARKDOWN_V2
             )
@@ -409,8 +412,9 @@ async def proceed_to_tariff_callback(callback_query: CallbackQuery, state: FSMCo
             # Fallback на все тарифы
             tariff_message_text = get_tariff_text(first_purchase=first_purchase, is_paying_user=False)
             subscription_kb = await create_subscription_keyboard(hide_mini_tariff=False)
-            await callback_query.message.answer(
-                tariff_message_text,
+            await smart_message_send(
+                callback_query,
+                text=tariff_message_text,
                 reply_markup=subscription_kb,
                 parse_mode=ParseMode.MARKDOWN_V2
             )
@@ -430,8 +434,9 @@ def setup_onboarding_handlers():
         user_id = query.from_user.id
         subscription_data = await check_database_user(user_id)
         if not subscription_data or len(subscription_data) < 14:
-            await query.message.answer(
-                escape_md("❌ Ошибка сервера! Попробуйте позже.", version=2),
+            await smart_message_send(
+                query,
+                text=escape_md("❌ Ошибка сервера! Попробуйте позже.", version=2),
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             await query.answer()
@@ -442,9 +447,4 @@ def setup_onboarding_handlers():
         # Показываем все тарифы
         tariff_message_text = get_tariff_text(first_purchase=first_purchase, is_paying_user=False)
         subscription_kb = await create_subscription_keyboard(hide_mini_tariff=False)
-        await query.message.answer(
-            tariff_message_text,
-            reply_markup=subscription_kb,
-            parse_mode=ParseMode.MARKDOWN_V2
-        )
-        await query.answer()
+        await smart_message_send(query, text=tariff_message_text, reply_markup=subscription_kb, parse_mode=ParseMode.MARKDOWN_V2)

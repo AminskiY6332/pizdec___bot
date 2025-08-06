@@ -37,9 +37,9 @@ from handlers.utils import (
     safe_escape_markdown as escape_md, safe_answer_callback,
     check_resources, check_active_avatar, check_style_config, create_payment_link,
     get_tariff_text, send_typing_action, clean_admin_context, escape_message_parts, safe_escape_markdown,
-    anti_spam
+    anti_spam, smart_message_send, smart_message_send_with_photo, delete_message_and_send_new
 )
-from handlers.onboarding import send_onboarding_message
+from .onboarding import send_onboarding_message
 
 logger = logging.getLogger(__name__)
 
@@ -67,23 +67,13 @@ async def handle_proceed_to_payment_callback(query: CallbackQuery, state: FSMCon
         )
 
         logger.info(f"Отправляем сообщение для user_id={user_id}")
-        # Отправляем сообщение с клавиатурой
-        try:
-            await query.message.edit_text(
-                text=message_text,
-                reply_markup=keyboard,
-                parse_mode=ParseMode.MARKDOWN_V2
-            )
-        except Exception as e:
-            logger.warning(f"Не удалось отредактировать сообщение для user_id={user_id}: {e}")
-            # Если не удалось отредактировать, отправляем новое сообщение
-            await query.message.answer(
-                text=message_text,
-                reply_markup=keyboard,
-                parse_mode=ParseMode.MARKDOWN_V2
-            )
-
-        await query.answer()
+        # Используем умную отправку сообщения
+        await smart_message_send(
+            query,
+            text=message_text,
+            reply_markup=keyboard,
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
         logger.info(f"Сообщение успешно отправлено для user_id={user_id}")
 
     except Exception as e:
@@ -94,7 +84,13 @@ async def handle_user_callback(query: CallbackQuery, state: FSMContext) -> None:
     """Обработчик пользовательских callback-запросов."""
     user_id = query.from_user.id
     callback_data = query.data
-    logger.info(f"handle_user_callback: user_id={user_id}, callback_data={callback_data}")
+    current_state = await state.get_state()
+    logger.info(f"handle_user_callback: user_id={user_id}, callback_data={callback_data}, current_state={current_state}")
+    
+    # ОТЛАДКА: Проверяем, перехватывается ли confirm_start_training здесь
+    if callback_data == "confirm_start_training":
+        logger.error(f"🚨 USER_CALLBACKS: Перехвачен confirm_start_training! current_state={current_state}")
+        logger.error(f"🚨 USER_CALLBACKS: Этот callback должен обрабатываться training_router, а не здесь!")
 
     # Проверка блокировки
     if await is_user_blocked(user_id):
@@ -132,7 +128,7 @@ async def handle_user_callback(query: CallbackQuery, state: FSMContext) -> None:
         elif callback_data == "photo_generate_menu":
             await handle_photo_generate_menu_callback(query, state, user_id)
         elif callback_data == "photo_transform":
-            from handlers.photo_transform import start_photo_transform
+            from .photo_transform import start_photo_transform
             await start_photo_transform(query, state)
         elif callback_data == "video_generate_menu":
             await handle_video_generate_menu_callback(query, state, user_id)
@@ -175,7 +171,7 @@ async def handle_user_callback(query: CallbackQuery, state: FSMContext) -> None:
         elif callback_data.startswith("aspect_"):
             await handle_aspect_ratio_callback(query, state)
         elif callback_data == "aspect_ratio_info":
-            from handlers.callbacks_utils import handle_aspect_ratio_info_callback
+            from ..system.utils import handle_aspect_ratio_info_callback
             await handle_aspect_ratio_info_callback(query, state, user_id)
         elif callback_data == "back_to_aspect_selection":
             await handle_back_to_aspect_selection_callback(query, state)
@@ -213,16 +209,18 @@ async def handle_user_callback(query: CallbackQuery, state: FSMContext) -> None:
             await handle_continue_upload_callback(query, state, user_id)
         elif callback_data == "start_training":
             await start_training(query.message, state)
-        elif callback_data == "confirm_start_training":
-            await handle_confirm_start_training_callback(query, state, user_id)
+
         elif callback_data == "back_to_avatar_name_input":
             await handle_back_to_avatar_name_input_callback(query, state, user_id)
         elif callback_data.startswith("use_suggested_trigger_"):
             await handle_use_suggested_trigger_callback(query, state, user_id, callback_data)
+        # УДАЛЕНО: confirm_start_training теперь обрабатывается в training_router
+        # elif callback_data == "confirm_start_training":
+        #     await handle_confirm_start_training_callback(query, state, user_id)
         elif callback_data == "check_training":
             user_data = await state.get_data()
             target_user_id = user_data.get('admin_generation_for_user', user_id)
-            from handlers.commands import check_training
+            from .commands import check_training
             await check_training(query.message, state, target_user_id)
         elif callback_data == "terms_of_service":
             await handle_terms_callback(query, state, user_id)
@@ -232,8 +230,9 @@ async def handle_user_callback(query: CallbackQuery, state: FSMContext) -> None:
         else:
             logger.warning(f"Неизвестный callback_data: {callback_data} для user_id={user_id}")
             await query.answer("⚠️ Неизвестное действие", show_alert=True)
-            await query.message.answer(
-                escape_md("⚠️ Это действие не поддерживается. Используй /menu.", version=2),
+            await smart_message_send(
+                query,
+                text=escape_md("⚠️ Это действие не поддерживается. Используй /menu.", version=2),
                 reply_markup=await create_main_menu_keyboard(user_id),
                 parse_mode=ParseMode.MARKDOWN_V2
             )
@@ -241,8 +240,9 @@ async def handle_user_callback(query: CallbackQuery, state: FSMContext) -> None:
         logger.error(f"Ошибка в обработчике callback для user_id={user_id}, data={callback_data}: {e}", exc_info=True)
         await state.clear()
         await safe_answer_callback(query, "❌ Произошла ошибка", show_alert=True)
-        await query.message.answer(
-            escape_md("❌ Произошла ошибка. Попробуйте снова или обратитесь в поддержку: @AXIDI_Help", version=2),
+        await smart_message_send(
+            query,
+            text=escape_md("❌ Произошла ошибка. Попробуйте снова или обратитесь в поддержку: @AXIDI_Help", version=2),
             reply_markup=await create_main_menu_keyboard(user_id),
             parse_mode=ParseMode.MARKDOWN_V2
         )
@@ -259,8 +259,9 @@ async def handle_back_to_menu_callback(query: CallbackQuery, state: FSMContext, 
             " Попробуйте позже.",
             version=2
         )
-        await query.message.answer(
-            text,
+        await smart_message_send(
+            query,
+            text=text,
             reply_markup=await create_main_menu_keyboard(user_id),
             parse_mode=ParseMode.MARKDOWN_V2
         )
@@ -304,16 +305,18 @@ async def handle_back_to_menu_callback(query: CallbackQuery, state: FSMContext, 
             "ℹ️ Поддержка если нужна помощь"
         )
         try:
-            await query.message.answer(
-                escape_md(menu_text),
+            await smart_message_send(
+                query,
+                text=escape_md(menu_text),
                 reply_markup=await create_main_menu_keyboard(user_id),
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             logger.info(f"Главное меню отправлено для user_id={user_id}")
         except Exception as e:
             logger.error(f"Ошибка отправки главного меню для user_id={user_id}: {e}", exc_info=True)
-            await query.message.answer(
-                escape_md("❌ Ошибка при возврате в главное меню. Попробуйте снова или обратитесь в поддержку: @AXIDI_Help"),
+            await smart_message_send(
+                query,
+                text=escape_md("❌ Ошибка при возврате в главное меню. Попробуйте снова или обратитесь в поддержку: @AXIDI_Help"),
                 reply_markup=await create_main_menu_keyboard(user_id),
                 parse_mode=ParseMode.MARKDOWN_V2
             )
@@ -325,8 +328,9 @@ async def handle_back_to_menu_callback(query: CallbackQuery, state: FSMContext, 
                 "Пожалуйста, купите пакет, чтобы продолжить творить с PixelPie. 🚀",
                 version=2
             )
-            await query.message.answer(
-                text,
+            await smart_message_send(
+                query,
+                text=text,
                 reply_markup=await create_payment_only_keyboard(user_id, time_since_registration, days_since_registration, last_reminder_type),
                 parse_mode=ParseMode.MARKDOWN_V2
             )
@@ -335,16 +339,18 @@ async def handle_back_to_menu_callback(query: CallbackQuery, state: FSMContext, 
             # Для оплативших пользователей показываем все тарифы
             tariff_text = get_tariff_text(first_purchase=first_purchase, is_paying_user=True)
             try:
-                await query.message.answer(
-                    tariff_text,
+                await smart_message_send(
+                    query,
+                    text=tariff_text,
                     reply_markup=await create_subscription_keyboard(hide_mini_tariff=False),
                     parse_mode=ParseMode.MARKDOWN_V2
                 )
                 logger.info(f"Все тарифы отправлены для оплатившего пользователя user_id={user_id}")
             except Exception as e:
                 logger.error(f"Ошибка отправки тарифов для user_id={user_id}: {e}", exc_info=True)
-                await query.message.answer(
-                    escape_md("❌ Ошибка при загрузке тарифов. Попробуйте снова или обратитесь в поддержку: @AXIDI_Help"),
+                await smart_message_send(
+                    query,
+                    text=escape_md("❌ Ошибка при загрузке тарифов. Попробуйте снова или обратитесь в поддержку: @AXIDI_Help"),
                     reply_markup=await create_main_menu_keyboard(user_id),
                     parse_mode=ParseMode.MARKDOWN_V2
                 )
@@ -377,16 +383,18 @@ async def handle_photo_generate_menu_callback(query: CallbackQuery, state: FSMCo
         escape_md("Идеально для воссоздания понравившихся образов!", version=2)
     )
     try:
-        await query.message.answer(
-            text,
+        await smart_message_send(
+            query,
+            text=text,
             reply_markup=await create_photo_generate_menu_keyboard(),
             parse_mode=ParseMode.MARKDOWN_V2
         )
         logger.debug(f"Меню фотогенерации отправлено для user_id={user_id}: {text}")
     except Exception as e:
         logger.error(f"Ошибка отправки меню фотогенерации для user_id={user_id}: {e}", exc_info=True)
-        await query.message.answer(
-            text,
+        await smart_message_send(
+            query,
+            text=text,
             reply_markup=await create_main_menu_keyboard(user_id),
             parse_mode=ParseMode.MARKDOWN_V2
         )
@@ -405,16 +413,18 @@ async def handle_video_generate_menu_callback(query: CallbackQuery, state: FSMCo
         version=2
     )
     try:
-        await query.message.answer(
-            text,
+        await smart_message_send(
+            query,
+            text=text,
             reply_markup=await create_video_generate_menu_keyboard(),
             parse_mode=ParseMode.MARKDOWN_V2
         )
         logger.debug(f"Меню видеогенерации отправлено для user_id={user_id}")
     except Exception as e:
         logger.error(f"Ошибка отправки меню видеогенерации для user_id={user_id}: {e}", exc_info=True)
-        await query.message.answer(
-            text,
+        await smart_message_send(
+            query,
+            text=text,
             reply_markup=await create_main_menu_keyboard(user_id),
             parse_mode=ParseMode.MARKDOWN_V2
         )
@@ -462,8 +472,9 @@ async def handle_generate_with_avatar_callback(query: CallbackQuery, state: FSMC
             logger.error(f"Ошибка проверки подписки для user_id={target_user_id}: subscription_data={subscription_data}")
             await state.clear()
             await query.answer("❌ Ошибка проверки подписки", show_alert=True)
-            await query.message.answer(
-                escape_md("❌ Ошибка проверки подписки. Попробуйте позже.", version=2),
+            await smart_message_send(
+                query,
+                text=escape_md("❌ Ошибка проверки подписки. Попробуйте позже.", version=2),
                 reply_markup=await create_main_menu_keyboard(user_id),
                 parse_mode=ParseMode.MARKDOWN_V2
             )
@@ -474,8 +485,9 @@ async def handle_generate_with_avatar_callback(query: CallbackQuery, state: FSMC
             logger.error(f"Некорректные данные подписки для user_id={target_user_id}: {subscription_data}")
             await state.clear()
             await query.answer("❌ Ошибка данных подписки", show_alert=True)
-            await query.message.answer(
-                escape_md("❌ Некорректные данные подписки. Обратитесь в поддержку: @AXIDI_Help", version=2),
+            await smart_message_send(
+                query,
+                text=escape_md("❌ Некорректные данные подписки. Обратитесь в поддержку: @AXIDI_Help", version=2),
                 reply_markup=await create_main_menu_keyboard(user_id),
                 parse_mode=ParseMode.MARKDOWN_V2
             )
@@ -494,8 +506,9 @@ async def handle_generate_with_avatar_callback(query: CallbackQuery, state: FSMC
             await state.clear()
             text = escape_md("❌ У вас нет обученного аватара. Создайте аватар через /menu → Мои аватары.", version=2)
             await query.answer("❌ Нет аватара", show_alert=True)
-            await query.message.answer(
-                text, reply_markup=await create_user_profile_keyboard(user_id, query.bot),
+            await smart_message_send(
+                query,
+                text=text, reply_markup=await create_user_profile_keyboard(user_id, query.bot),
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
@@ -505,8 +518,9 @@ async def handle_generate_with_avatar_callback(query: CallbackQuery, state: FSMC
             await state.clear()
             text = escape_md("❌ У вас закончились генерации. Пополните баланс через /menu → Тарифы.", version=2)
             await query.answer("❌ Недостаточно генераций", show_alert=True)
-            await query.message.answer(
-                text, reply_markup=await create_subscription_keyboard(),
+            await smart_message_send(
+                query,
+                text=text, reply_markup=await create_subscription_keyboard(),
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
@@ -898,14 +912,9 @@ async def handle_photo_to_photo_callback(query: CallbackQuery, state: FSMContext
         escape_md("📝 PixelPie AI создаст твое фото сам!", version=2)
     )
 
-    # Удаляем предыдущее сообщение с кнопками
-    try:
-        await query.message.delete()
-    except Exception:
-        pass
-
-    await query.message.answer(
-        text,
+    await smart_message_send(
+        query,
+        text=text,
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🔙 Назад", callback_data="generate_menu")]
         ]),
@@ -1786,8 +1795,9 @@ async def handle_user_profile_callback(query: CallbackQuery, state: FSMContext, 
             version=2
         )
         logger.debug(f"handle_user_profile_callback: сформирован текст: {text[:200]}...")
-        await query.message.answer(
-            text,
+        await smart_message_send(
+            query,
+            text=text,
             reply_markup=await create_main_menu_keyboard(user_id),
             parse_mode=ParseMode.MARKDOWN_V2
         )
@@ -1800,8 +1810,9 @@ async def handle_user_profile_callback(query: CallbackQuery, state: FSMContext, 
     ]
     text = escape_message_parts(*text_parts, version=2)
     logger.debug(f"handle_user_profile_callback: сформирован текст: {text[:200]}...")
-    await query.message.answer(
-        text,
+    await smart_message_send(
+        query,
+        text=text,
         reply_markup=await create_user_profile_keyboard(user_id, query.bot),
         parse_mode=ParseMode.MARKDOWN_V2
     )
@@ -1946,12 +1957,13 @@ async def handle_user_stats_callback(query: CallbackQuery, state: FSMContext, us
         for i, message_text in enumerate(messages):
             text = escape_message_parts(message_text, version=2)
             reply_markup = await create_referral_keyboard(user_id, bot_username) if i == len(messages) - 1 else None
-            await query.message.answer(
-                text,
+            await smart_message_send(
+                query,
+                text=text,
                 reply_markup=reply_markup,
                 parse_mode=ParseMode.MARKDOWN_V2
             )
-            logger.debug(f"handle_user_stats_callback: отправка части {i+1}/{len(messages)}, длина={len(text)}")
+        logger.debug(f"handle_user_stats_callback: отправка части {i+1}/{len(messages)}, длина={len(text)}")
         logger.info(f"Статистика отправлена для user_id={user_id}")
     except Exception as e:
         logger.error(f"Ошибка отправки статистики для user_id={user_id}: {e}", exc_info=True)
@@ -1981,8 +1993,9 @@ async def handle_subscribe_callback(query: CallbackQuery, state: FSMContext, use
             " Попробуйте позже.",
             version=2
         )
-        await query.message.answer(
-            text,
+        await smart_message_send(
+            query,
+            text=text,
             reply_markup=await create_main_menu_keyboard(user_id),
             parse_mode=ParseMode.MARKDOWN_V2
         )
@@ -2105,11 +2118,21 @@ async def handle_subscribe_callback(query: CallbackQuery, state: FSMContext, use
         for i, message_text in enumerate(messages):
             text = escape_message_parts(message_text, version=2)
             reply_markup = InlineKeyboardMarkup(inline_keyboard=keyboard) if i == len(messages) - 1 else None
-            await query.message.answer(
-                text,
-                reply_markup=reply_markup,
-                parse_mode=ParseMode.MARKDOWN_V2
-            )
+            if i == 0:
+                # Первое сообщение - редактируем текущее
+                await smart_message_send(
+                    query,
+                    text=text,
+                    reply_markup=reply_markup,
+                    parse_mode=ParseMode.MARKDOWN_V2
+                )
+            else:
+                # Остальные сообщения - отправляем как новые
+                await query.message.answer(
+                    text,
+                    reply_markup=reply_markup,
+                    parse_mode=ParseMode.MARKDOWN_V2
+                )
             logger.debug(f"handle_subscribe_callback: отправка части {i+1}/{len(messages)}, длина={len(text)}")
         logger.info(f"Меню тарифов успешно отправлено для user_id={user_id}")
     except Exception as e:
@@ -2119,8 +2142,9 @@ async def handle_subscribe_callback(query: CallbackQuery, state: FSMContext, use
             " Попробуйте снова или обратитесь в поддержку: @AXIDI_Help",
             version=2
         )
-        await query.message.answer(
-            text,
+        await smart_message_send(
+            query,
+            text=text,
             reply_markup=await create_main_menu_keyboard(user_id),
             parse_mode=ParseMode.MARKDOWN_V2
         )
@@ -2143,8 +2167,9 @@ async def handle_payment_callback(query: CallbackQuery, state: FSMContext, user_
                 " Выберите тариф заново.",
                 version=2
             )
-            await query.message.answer(
-                text,
+            await smart_message_send(
+                query,
+                text=text,
                 reply_markup=await create_subscription_keyboard(hide_mini_tariff=True),
                 parse_mode=ParseMode.MARKDOWN_V2
             )
@@ -2166,8 +2191,9 @@ async def handle_payment_callback(query: CallbackQuery, state: FSMContext, user_
                 " Попробуйте снова или обратитесь в поддержку: @AXIDI_Help",
                 version=2
             )
-            await query.message.answer(
-                text,
+            await smart_message_send(
+                query,
+                text=text,
                 reply_markup=await create_subscription_keyboard(hide_mini_tariff=True),
                 parse_mode=ParseMode.MARKDOWN_V2
             )
@@ -2272,8 +2298,9 @@ async def handle_payment_callback(query: CallbackQuery, state: FSMContext, user_
                 )
 
                 logger.info(f"Платежная ссылка создана для user_id={user_id}: {payment_url}, payment_id={payment_id}")
-                payment_message = await query.message.answer(
-                    text,
+                payment_message = await smart_message_send(
+                    query,
+                    text=text,
                     reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(text="🔙 Назад к пакетам", callback_data="subscribe")]
                     ]),
@@ -2288,7 +2315,7 @@ async def handle_payment_callback(query: CallbackQuery, state: FSMContext, user_
                 # Добавляем задачу в планировщик через глобальную переменную
                 try:
                     from main import scheduler_instance
-                    from handlers.payment_checker import check_payment_status_and_update_message
+                    from ..system.payment_checker import check_payment_status_and_update_message
                     if scheduler_instance:
                         scheduler_instance.add_job(
                             check_payment_status_and_update_message,
@@ -2308,8 +2335,9 @@ async def handle_payment_callback(query: CallbackQuery, state: FSMContext, user_
                     " Попробуйте позже или обратитесь в поддержку: @AXIDI_Help",
                     version=2
                 )
-                await query.message.answer(
-                    text,
+                await smart_message_send(
+                    query,
+                    text=text,
                     reply_markup=await create_subscription_keyboard(hide_mini_tariff=True),
                     parse_mode=ParseMode.MARKDOWN_V2
                 )
@@ -2320,8 +2348,9 @@ async def handle_payment_callback(query: CallbackQuery, state: FSMContext, user_
                 f"📧 Для оформления покупки \"{description}\" ({amount:.2f} RUB) введите ваш email:",
                 version=2
             )
-            await query.message.answer(
-                text,
+            await smart_message_send(
+                query,
+                text=text,
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                     [InlineKeyboardButton(text="🔙 Назад к пакетам", callback_data="subscribe")]
                 ]),
@@ -2335,8 +2364,9 @@ async def handle_payment_callback(query: CallbackQuery, state: FSMContext, user_
             " Попробуйте снова или обратитесь в поддержку: @AXIDI_Help",
             version=2
         )
-        await query.message.answer(
-            text,
+        await smart_message_send(
+            query,
+            text=text,
             reply_markup=await create_subscription_keyboard(hide_mini_tariff=True),
             parse_mode=ParseMode.MARKDOWN_V2
         )
@@ -2354,8 +2384,9 @@ async def handle_my_avatars_callback(query: CallbackQuery, state: FSMContext, us
         version=2
     )
     logger.debug(f"handle_my_avatars_callback: сформирован текст: {text[:200]}...")
-    await query.message.answer(
-        text,
+    await smart_message_send(
+        query,
+        text=text,
         reply_markup=await create_avatar_selection_keyboard(user_id),
         parse_mode=ParseMode.MARKDOWN_V2
     )
@@ -2433,7 +2464,17 @@ async def handle_train_flux_callback(query: CallbackQuery, state: FSMContext, us
         return
     await state.clear()
     await reset_generation_context(state, "train_flux", user_id=user_id)
+    
+    # Устанавливаем правильное состояние FSM для загрузки фотографий
+    from generation.training import TrainingStates
+    await state.set_state(TrainingStates.AWAITING_PHOTOS)
     await state.update_data(training_step='upload_photos', training_photos=[], user_id=user_id)
+    
+    # Добавляем отладочную информацию
+    current_state = await state.get_state()
+    user_data = await state.get_data()
+    logger.info(f'handle_train_flux_callback: установлено состояние {current_state} для user_id={user_id}, user_data={user_data}')
+    
     text_parts = [
         "🎨 СОЗДАНИЕ ВАШЕГО АВАТАРА\n\n",
         "Для создания высококачественного аватара мне нужно минимум 10 твоих фотографий (оптимально 15-20) с АКЦЕНТОМ на лицо. ",
@@ -2477,11 +2518,22 @@ async def handle_train_flux_callback(query: CallbackQuery, state: FSMContext, us
             reply_markup = InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="❌ Отмена", callback_data="user_profile")]
             ]) if i == len(messages) - 1 else None
-            await query.message.answer(
-                text,
-                reply_markup=reply_markup,
-                parse_mode=ParseMode.MARKDOWN_V2
-            )
+            
+            if i == 0:
+                # Для первого сообщения удаляем предыдущее
+                await delete_message_and_send_new(
+                    query,
+                    text=text,
+                    reply_markup=reply_markup,
+                    parse_mode=ParseMode.MARKDOWN_V2
+                )
+            else:
+                # Остальные сообщения отправляем как обычно
+                await query.message.answer(
+                    text,
+                    reply_markup=reply_markup,
+                    parse_mode=ParseMode.MARKDOWN_V2
+                )
             logger.debug(f"handle_train_flux_callback: отправка части {i+1}/{len(messages)}, длина={len(text)}")
         logger.info(f"Сообщение о создании аватара отправлено для user_id={user_id}")
     except Exception as e:
@@ -2492,8 +2544,9 @@ async def handle_train_flux_callback(query: CallbackQuery, state: FSMContext, us
             version=2
         )
         logger.debug(f"handle_train_flux_callback: сформирован текст: {text[:200]}...")
-        await query.message.answer(
-            text,
+        await delete_message_and_send_new(
+            query,
+            text=text,
             reply_markup=await create_main_menu_keyboard(user_id),
             parse_mode=ParseMode.MARKDOWN_V2
         )
@@ -2504,7 +2557,12 @@ async def handle_continue_upload_callback(query: CallbackQuery, state: FSMContex
     logger.debug(f"handle_continue_upload_callback вызван для user_id={user_id}")
     try:
         await state.clear()
+        
+        # Устанавливаем правильное состояние FSM для загрузки фотографий
+        from generation.training import TrainingStates
+        await state.set_state(TrainingStates.AWAITING_PHOTOS)
         await state.update_data(training_step='upload_photos', user_id=user_id)
+        
         user_data = await state.get_data()
         training_photos = user_data.get('training_photos', [])
         photo_count = len(training_photos)
@@ -2525,14 +2583,11 @@ async def handle_continue_upload_callback(query: CallbackQuery, state: FSMContex
         logger.info(f"Сообщение о продолжении загрузки отправлено для user_id={user_id}")
     except Exception as e:
         logger.error(f"Ошибка в handle_continue_upload_callback для user_id={user_id}: {e}", exc_info=True)
-        await state.clear()
-        await query.answer("❌ Произошла ошибка", show_alert=True)
         text = escape_message_parts(
-            "❌ Произошла ошибка при загрузке фотографий.",
+            "❌ Произошла ошибка при продолжении загрузки.",
             " Попробуйте снова или обратитесь в поддержку: @AXIDI_Help",
             version=2
         )
-        logger.debug(f"handle_continue_upload_callback: сформирован текст: {text[:200]}...")
         await query.message.answer(
             text,
             reply_markup=await create_main_menu_keyboard(user_id),
@@ -2582,7 +2637,6 @@ async def handle_start_training_callback(query: CallbackQuery, state: FSMContext
             parse_mode=ParseMode.MARKDOWN_V2
         )
         logger.info(f"Обучение аватара запущено для user_id={user_id} с {photo_count} фотографиями")
-        from generation.training import start_training
         await start_training(query.message, state)
     except Exception as e:
         logger.error(f"Ошибка в handle_start_training_callback для user_id={user_id}: {e}", exc_info=True)
@@ -3044,6 +3098,7 @@ async def handle_confirm_photo_quality_callback(query: CallbackQuery, state: FSM
     avatar_name = user_data.get('avatar_name', 'Без имени')
     training_photos = user_data.get('training_photos', [])
     photo_count = len(training_photos)
+    logger.info(f"handle_confirm_photo_quality_callback: user_id={user_id}, avatar_name={avatar_name}, photo_count={photo_count}, training_photos={training_photos[:3] if training_photos else []}")
 
     if photo_count < 10:
         logger.warning(f"Недостаточно фото для user_id={user_id}: {photo_count}")
@@ -3068,8 +3123,8 @@ async def handle_confirm_photo_quality_callback(query: CallbackQuery, state: FSM
         await state.update_data(training_step='enter_avatar_name')
         await state.set_state(TrainingStates.AWAITING_AVATAR_NAME)
         text = escape_message_parts(
-            "❌ Ошибка: имя аватара не задано.",
-            " Введите имя для аватара.",
+            f"🏷 Придумай имя для своего аватара (например: \"Мой стиль\", \"Бизнес-образ\").",
+            f"📸 У тебя загружено {photo_count} фото.",
             version=2
         )
         logger.debug(f"handle_confirm_photo_quality_callback: сформирован текст: {text[:200]}...")
@@ -3084,7 +3139,7 @@ async def handle_confirm_photo_quality_callback(query: CallbackQuery, state: FSM
         return
 
     if not await check_user_resources(query.bot, user_id, required_avatars=1):
-        await state.clear()
+        # Не очищаем состояние, чтобы сохранить загруженные фото
         await state.update_data(user_id=user_id)
         return
 
@@ -3101,6 +3156,8 @@ async def handle_confirm_photo_quality_callback(query: CallbackQuery, state: FSM
     logger.debug(f"handle_confirm_photo_quality_callback: сформирован текст: {text[:200]}...")
 
     try:
+        # Устанавливаем правильное состояние для обработки кнопки "Начать обучение"
+        await state.set_state(TrainingStates.AWAITING_CONFIRMATION)
         await asyncio.sleep(0.1)
         await query.message.answer(
             text,
@@ -3282,8 +3339,9 @@ async def handle_change_email_callback(query: CallbackQuery, state: FSMContext, 
         version=2
     )
     logger.debug(f"handle_change_email_callback: сформирован текст: {text[:200]}...")
-    await query.message.answer(
-        text,
+    await delete_message_and_send_new(
+        query,
+        text=text,
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🔙 В личный кабинет", callback_data="user_profile")]
         ]),
@@ -3402,12 +3460,10 @@ async def cancel(message: Message, state: FSMContext) -> None:
         "skip_prompt", "aspect_ratio_info", "back_to_aspect_selection", "back_to_style_selection",
         "confirm_generation", "confirm_photo_quality", "skip_mask", "user_profile",
         "check_subscription", "user_stats", "subscribe", "change_email", "confirm_change_email",
-        "my_avatars", "train_flux", "continue_upload", "start_training", "confirm_start_training",
+        "my_avatars", "train_flux", "continue_upload", "start_training",
         "back_to_avatar_name_input", "check_training", "terms_of_service", "back_to_menu"
     ] or c.data.startswith(("style_", "video_style_", "male_styles_page_", "female_styles_page_", "aspect_", "confirm_video_generation", "rate_", "select_avatar_", "use_suggested_trigger_", "pay_"))
 )
-
-
 async def user_callback_handler(query: CallbackQuery, state: FSMContext) -> None:
     logger.debug(f"Callback_query получен: id={query.id}, data={query.data}")
     await handle_user_callback(query, state)

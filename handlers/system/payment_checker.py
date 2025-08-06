@@ -100,11 +100,11 @@ async def handle_successful_payment_message(
 
     except TelegramBadRequest as e:
         if "message is not modified" in str(e).lower():
-            logger.debug(f"Сообщение не изменилось для user_id={user_id}")
+            logger.info(f"Сообщение для user_id={user_id} уже было обновлено")
         else:
-            logger.error(f"Ошибка обновления сообщения об успешной оплате: {e}")
+            logger.error(f"Ошибка Telegram при обновлении сообщения для user_id={user_id}: {e}")
     except Exception as e:
-        logger.error(f"Ошибка в handle_successful_payment_message: {e}", exc_info=True)
+        logger.error(f"Ошибка при обновлении сообщения об успешной оплате для user_id={user_id}: {e}", exc_info=True)
 
 async def handle_expired_payment_message(
     bot: Bot,
@@ -115,19 +115,18 @@ async def handle_expired_payment_message(
     Обновляет сообщение для истекшего платежа.
     """
     try:
-        # Формируем текст об истечении времени
+        # Формируем текст истекшего платежа
         expired_text = escape_message_parts(
-            "⏰ Время оплаты истекло\n\n",
-            "💳 Ссылка на оплату больше не активна.\n",
-            "🔄 Вы можете выбрать тариф заново.\n\n",
-            "💡 Новая ссылка будет действительна 10 минут.",
+            "⏰ Время ожидания платежа истекло\n\n",
+            "💳 Платеж не был обработан или был отменен\\.\n\n",
+            "🔄 Попробуйте оплатить снова или обратитесь в поддержку\\.",
             version=2
         )
 
-        # Клавиатура для возврата к тарифам
+        # Клавиатура для повторной оплаты
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="💎 Выбрать тариф", callback_data="subscribe")],
-            [InlineKeyboardButton(text="🔙 Главное меню", callback_data="back_to_menu")]
+            [InlineKeyboardButton(text="💳 Попробовать снова", callback_data="subscribe")],
+            [InlineKeyboardButton(text="🔙 Вернуться в меню", callback_data="back_to_menu")]
         ])
 
         await bot.edit_message_text(
@@ -138,12 +137,12 @@ async def handle_expired_payment_message(
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
-        logger.info(f"Сообщение об истечении времени оплаты обновлено для user_id={user_id}")
+        logger.info(f"Сообщение об истекшем платеже обновлено для user_id={user_id}")
 
     except TelegramBadRequest as e:
         if "message is not modified" in str(e).lower():
-            logger.debug(f"Сообщение не изменилось для user_id={user_id}")
+            logger.info(f"Сообщение для user_id={user_id} уже было обновлено")
         else:
-            logger.error(f"Ошибка обновления сообщения об истечении: {e}")
+            logger.error(f"Ошибка Telegram при обновлении сообщения для user_id={user_id}: {e}")
     except Exception as e:
-        logger.error(f"Ошибка в handle_expired_payment_message: {e}", exc_info=True)
+        logger.error(f"Ошибка при обновлении сообщения об истекшем платеже для user_id={user_id}: {e}", exc_info=True) 

@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.enums import ParseMode
 from config import ADMIN_IDS, DATABASE_PATH
 from database import check_database_user, is_user_blocked
-from handlers.utils import safe_escape_markdown as escape_md, safe_answer_callback
+from handlers.utils import safe_escape_markdown as escape_md, safe_answer_callback, smart_message_send
 from keyboards import create_main_menu_keyboard, create_referral_keyboard, create_admin_keyboard
 
 logger = logging.getLogger(__name__)
@@ -86,8 +86,8 @@ async def handle_referrals_menu_callback(query: CallbackQuery, state: FSMContext
         f"`t\\.me/{escape_md(bot_username, version=2)}?start=ref_{escape_md(str(user_id), version=2)}`"
     )
     keyboard = await create_referral_keyboard(user_id, bot_username)
-    await query.message.answer(
-        text, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN_V2
+    await smart_message_send(
+        query, text=text, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN_V2
     )
     logger.debug("Меню рефералов отправлено для user_id=%s", user_id)
 

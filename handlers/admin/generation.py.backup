@@ -1,4 +1,4 @@
-# generation/generation.py
+# handlers/admin/generation.py
 
 import asyncio
 import logging
@@ -647,4 +647,4 @@ async def handle_admin_prompt_message(message: Message, state: FSMContext) -> No
 
     user_data = await state.get_data()
     if user_data.get('awaiting_admin_prompt'):
-        await handle_admin_custom_prompt(message, state)
+        await handle_admin_custom_prompt(message, state) 

@@ -15,6 +15,10 @@ from .referrals import (
     handle_referrals_menu_callback, handle_referral_info_callback,
     handle_copy_referral_link_callback, handle_my_referrals_callback
 )
+from .payment_checker import (
+    check_payment_status_and_update_message, handle_successful_payment_message,
+    handle_expired_payment_message
+)
 
 __all__ = [
     # Errors
@@ -29,5 +33,9 @@ __all__ = [
     # Referrals
     'referrals_callbacks_router', 'handle_referrals_callback',
     'handle_referrals_menu_callback', 'handle_referral_info_callback',
-    'handle_copy_referral_link_callback', 'handle_my_referrals_callback'
+    'handle_copy_referral_link_callback', 'handle_my_referrals_callback',
+    
+    # Payment Checker
+    'check_payment_status_and_update_message', 'handle_successful_payment_message',
+    'handle_expired_payment_message'
 ]
